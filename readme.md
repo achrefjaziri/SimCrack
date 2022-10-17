@@ -1,4 +1,15 @@
 
+
+## Training Models ##
+```
+python main.py 
+--arch_name  unet --dataset  SimCrack --batch_size 16 --resize_input --input_size 256
+```
+To Train Models with PMI calculations. It is preferable to use pre-calculated PMI maps to speed up training. For this purpose use the create_pmi_weights.py script.
+
+
+## Evaluation ##
+
 Create predictions maps
 ```
 python run_segmentation.py 
