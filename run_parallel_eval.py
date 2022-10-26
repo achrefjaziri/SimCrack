@@ -18,7 +18,7 @@ def run_parallel_eval():
     print('number of images:', len(res_arr))
 
     current_model_name = os.path.basename(os.path.abspath(os.path.join(args.pred_path, "..")))
-    csv_path = os.path.join(args.save_dir,'eval_results',f'results_{args.dataset}_{current_model_name}_{os.path.basename(args.pred_path)}.csv')
+    csv_path = os.path.join(args.save_dir,'eval_results2',f'results_{args.dataset}_{current_model_name}_{os.path.basename(args.pred_path)}.csv')
     print(csv_path)
     if os.path.exists(csv_path):
         # if the csv file exists remove the already evaluated images from res_arr
@@ -35,13 +35,13 @@ def run_parallel_eval():
     if args.dataset == 'SimResist':
         res_arr = [(args.gt_path + '/' + os.path.basename(img_path), img_path) for img_path in
                    res_arr]
-    elif args.dataset == 'RealResist':
+    elif args.dataset == 'RealResist' or  args.dataset == 'MultiSet' :
         res_arr = [(args.gt_path + '/' + os.path.basename(img_path), img_path) for img_path in
                    res_arr]
     elif args.dataset == 'CrackForest':
-
         res_arr = [(args.gt_path + '/' + os.path.basename(img_path), img_path) for img_path in
                    res_arr]  # .replace('render_noise','gt') replace('.png','_annot.png') .replace('.jpg.png','_label.PNG') .replace('.png','_annot.png')
+
 
     mp.set_start_method('spawn')
     p = Pool(args.num_cpus)

@@ -10,15 +10,12 @@ from lib.models.unet import UNet
 from lib.models.munet import MultiUNet
 from lib.dataloaders.sim_dataloader import SimDataloader
 from lib.dataloaders.real_dataloader import RealDataloader
+from lib.dataloaders.multi_crack_set_dataloader import MultiSetDataloader
 from lib.eval.evaluation_scripts import eval_model_patchwise,eval_model
-
-
 def main():
     print(" Evaluating semantic segmentation model...")
     os.environ["CUDA_VISIBLE_DEVICES"] ='2'
-
     args = parse_args()
-
 
     # create folder
     save_dir = os.path.join(args.save_dir,"eval_outputs",args.dataset, args.arch_name, os.path.basename(args.model_path))
@@ -26,8 +23,6 @@ def main():
 
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
-
-
 
     logging.basicConfig(handlers=[logging.FileHandler(filename=os.path.join(save_dir, 'run_history.log'),
                                                       encoding='utf-8', mode='a+')],
@@ -69,6 +64,11 @@ def main():
         test_set = SimDataloader(args, mode = "test")
     elif args.dataset=='RealResist':
         test_set = RealDataloader(args)
+    elif args.dataset=='MultiSet':
+        test_set = MultiSetDataloader(args, mode="test")
+    else:
+        print('Choose valid dataset!')
+        exit()
 
     test_loader = \
         torch.utils.data.DataLoader(dataset=test_set,

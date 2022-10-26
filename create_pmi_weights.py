@@ -13,6 +13,7 @@ import numpy as np
 import os
 from lib.arg_parser.general_args import parse_args
 from lib.dataloaders.sim_dataloader import SimDataloader
+from lib.dataloaders.multi_crack_set_dataloader import MultiSetDataloader
 from lib.dataloaders.real_dataloader import RealDataloader
 import torch
 import cv2
@@ -258,25 +259,35 @@ def save_patch_wise_pmi_maps(orig_img, args, pmi_dir, curr_img_name):
 
 if __name__ == "__main__":
     args = parse_args()
-    '''
-        for mode in ['test','val','train']:
-        Dataset_test = SimDataloader(args,mode=mode)
 
-        test_load = \
-            torch.utils.data.DataLoader(dataset=Dataset_test,
-                                        num_workers=16, batch_size=1, shuffle=False)
+    mode ='test'
 
-        pmi_dir = os.path.join(args.pmi_dir,f'{args.neighbour_size}_{args.phi_value}',mode)
+    pmi_dir = os.path.join(args.pmi_dir, f'{args.neighbour_size}_{args.phi_value}', mode)
+    if args.dataset=='MultiSet':
+        Dataset_test = MultiSetDataloader(args, mode="test")
+    else:
+        Dataset_test = SimDataloader(args,mode=mode,remove_duplicated=pmi_dir+'/*')
 
-        for batch, data in enumerate(test_load):
-            input_img = data['input'][0].detach().cpu().numpy().copy().transpose(1,2,0)
-            img_name = os.path.basename(data['path'][0])
-            print('image batch', batch,input_img.shape,img_name)
 
-            save_pmi_maps(input_img, args, pmi_dir, img_name)
+    test_load = \
+        torch.utils.data.DataLoader(dataset=Dataset_test,
+                                    num_workers=16, batch_size=1, shuffle=False)
 
-    '''
-    Dataset_test = RealDataloader(args)
+    pmi_dir = os.path.join(args.pmi_dir,args.dataset,f'{args.neighbour_size}_{args.phi_value}',mode)
+
+    for batch, data in enumerate(test_load):
+
+        input_img = data['input'][0].detach().cpu().numpy().copy().transpose(1,2,0)
+        img_name = os.path.basename(data['path'][0])
+        print('image batch', batch,input_img.shape,img_name)
+
+        save_pmi_maps(input_img, args, pmi_dir, img_name)
+
+
+
+
+    """
+        Dataset_test = RealDataloader(args)
 
     test_load = \
         torch.utils.data.DataLoader(dataset=Dataset_test,
@@ -293,7 +304,7 @@ if __name__ == "__main__":
         print('image batch', batch, input_img.shape, img_name)
 
         save_patch_wise_pmi_maps(input_img, args, pmi_dir, img_name)
-
+    """
 
 
 

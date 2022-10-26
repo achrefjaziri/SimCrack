@@ -79,7 +79,7 @@ def parse_general_args(parser):
     parser.add_argument(
         "--dataset",
         default='SimResist',
-        help="Available Datasets: SimResist, RealResist, CrackForest",
+        help="Available Datasets: SimResist, RealResist, MultiSet",
     )
     parser.add_argument(
         "--partition_name",

@@ -4,11 +4,11 @@ import os
 from save_history import save_eval_history
 
 if __name__=="__main__":
-    folder = "/home/ajaziri/resist_projects/SimCrack/workspace/eval_results"
+    folder = "/home/ajaziri/resist_projects/SimCrack/workspace/eval_results2"
 
     all_csv_files = glob.glob(folder +'/*')
 
-    avg_acc_csv_path ="/home/ajaziri/resist_projects/SimCrack/workspace/avg_results.csv"
+    avg_acc_csv_path ="/home/ajaziri/resist_projects/SimCrack/workspace/avg_results_multiSet.csv"
 
     for file_path in all_csv_files:
         print(file_path)

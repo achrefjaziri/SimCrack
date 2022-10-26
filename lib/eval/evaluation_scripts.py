@@ -37,6 +37,7 @@ def eval_model_patchwise(model, data_test, storage_directory='prediction',args= 
             #pad images
             img = F.pad(img, (x2, y2, x1, y1))
 
+
             #change the first unfold to 3 ,3 if in grey scale image else rgb img
             if args.input_ch==1:
                 patches = img.data.unfold(0, 1, 1).unfold(1, patch_size, patch_size).unfold(2, patch_size, patch_size)

@@ -47,7 +47,8 @@ def compute_scores(input_args):
     ground_truth = np.array(ground_truth, dtype=np.int)
     ground_truth = np.where(ground_truth > 0, 1, ground_truth)
     # delete separate color channel
-    ground_truth = ground_truth[:, :, 0]
+    if args.dataset=='RealResist' or args.dataset=='SimResist':
+        ground_truth = ground_truth[:, :, 0]
 
 
 
@@ -95,7 +96,7 @@ def compute_scores(input_args):
                 f1_2,f1_5 = 0.0,0.0
             else:
                 # TODO check if this is correct?
-                f1_2 = theta_F1(ground_truth, prediction, 2)
+                f1_2 = theta_F1(ground_truth, prediction, 10)
                 f1_5 = theta_F1(ground_truth, prediction, 5)
         else:
             f1_2,f1_5 = None, None

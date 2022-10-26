@@ -16,6 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
 from lib.models.unet import UNet
 from lib.dataloaders.sim_dataloader import SimDataloader
+from lib.dataloaders.multi_crack_set_dataloader import MultiSetDataloader
 from lib.training.train import train_model
 from lib.training.validate import validate_model
 from lib.utils.save_history import save_models
@@ -169,9 +170,12 @@ def main(gpu, args, current_dir):
     print('Loading Data...')
 
     # Data Loader
-    training_set = SimDataloader(args, mode="train")
-
-    validation_set = SimDataloader(args, mode="val")
+    if args.dataset == 'SimResist':
+        training_set = SimDataloader(args, mode="train")
+        validation_set = SimDataloader(args, mode="val")
+    else:
+        training_set = MultiSetDataloader(args, mode="train")
+        validation_set = MultiSetDataloader(args, mode="test")
 
     validation_loader = \
         torch.utils.data.DataLoader(dataset=validation_set,
