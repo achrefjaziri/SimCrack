@@ -66,6 +66,49 @@ class MultiUNet(nn.Module):
 
         return x_norm ,x_seg,x_depth
 
+class SegPMIUNet(nn.Module):
+    """Initalizes the UNet architecture and the according forward pass"""
+    def __init__(self, n_channels, n_classes):
+        """Initialize a U-Net object
+        Set the third variable in the up instance = False if feature maps shouldn't
+        be upsampled by bilinear interpolation but by learning the weights"""
+        super(SegPMIUNet, self).__init__()
+        self.inc = inconv(n_channels, 64)
+        self.down1 = down(64, 128)
+        self.down2 = down(128, 256)
+        self.down3 = down(256, 512)
+        self.down4 = down(512, 512)
+        self.up1 = up(1024, 256)
+        self.up2 = up(512, 128)
+        self.up3 = up(256, 64)
+        self.up4 = up(128, 64)
+        self.up1D = up(1024, 256)
+        self.up2D = up(512, 128)
+        self.up3D = up(256, 64)
+        self.up4D = up(128, 64)
+        self.outpmi = outconv(64, 1)
+        self.outc = outconv(64,n_classes)
+
+    def forward(self, x):
+        """Define the forward pass"""
+        x1 = self.inc(x)
+        x2 = self.down1(x1)
+        x3 = self.down2(x2)
+        x4 = self.down3(x3)
+        x5 = self.down4(x4)
+        x_seg = self.up1(x5, x4)
+        x_seg = self.up2(x_seg, x3)
+        x_seg = self.up3(x_seg, x2)
+        x_seg = self.up4(x_seg, x1)
+        x_pmi = self.up1D(x5, x4)
+        x_pmi = self.up2D(x_pmi, x3)
+        x_pmi = self.up3D(x_pmi, x2)
+        x_pmi = self.up4D(x_pmi, x1)
+        x_seg = self.outc(x_seg)
+        x_pmi = self.outpmi(x_pmi)
+
+        return x_seg,x_pmi
+
 class MultiUNetEncoder(nn.Module):
     """Initalizes the UNet architecture and the according forward pass"""
     def __init__(self, n_channels, n_classes):

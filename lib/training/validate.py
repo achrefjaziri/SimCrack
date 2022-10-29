@@ -29,7 +29,8 @@ def validate_model(model, data_test, loss_funcs, epoch, writer, storage_director
             if config.arch_name == 'munet':
                 # we only care about the segmentation output here
                 y, output, x = model(image)
-
+            elif config.arch_name=='munet_pmi':
+                output, x = model(image)
             else:
                 output = model(image)
             loss = loss_funcs['SEG'](output, mask)

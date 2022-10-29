@@ -15,6 +15,7 @@ from torch.utils.data import DataLoader, random_split
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
 from lib.models.unet import UNet
+from lib.models.munet import SegPMIUNet,MultiUNet
 from lib.dataloaders.sim_dataloader import SimDataloader
 from lib.dataloaders.multi_crack_set_dataloader import MultiSetDataloader
 from lib.training.train import train_model
@@ -30,7 +31,8 @@ def train_and_val(args, model, train_loader, gpu, validation_loader, writer, cur
     #class_weights = torch.FloatTensor([1,50]).to(gpu)
     loss_functions = {
         'SEG': nn.CrossEntropyLoss(),
-        'DEPTH': DepthLoss().to(gpu),
+        #'DEPTH': DepthLoss().to(gpu),
+        'DEPTH': nn.MSELoss().to(gpu),
         'NRM': [nn.CosineEmbeddingLoss().to(gpu), nn.MSELoss().to(gpu)]
     }
     # Optimizer
@@ -67,7 +69,6 @@ def train_and_val(args, model, train_loader, gpu, validation_loader, writer, cur
             #loss_funcs, epoch, writer, storage_directory='prediction', config=None, gpu='cpu'
             print('Epoch', str(epoch + 1), 'Train loss:', train_loss, "Train acc", train_acc, 'Validation loss:',
                   results_val["Loss"], "Validation acc", results_val["Accuracy"])
-
             logging.info(
                 f'Epoch {epoch + 1}, Validation loss {results_val["Loss"]}, Validation acc {results_val["Accuracy"]}')
 
@@ -112,9 +113,10 @@ def main(gpu, args, current_dir):
     # load model
     print('Loading Model...')
     # TODO add the other models
-    model = UNet(args.input_ch, args.num_classes)
     if args.arch_name=='unet' or args.arch_name=='pmiunet' :
         model = UNet(args.input_ch, args.num_classes)
+    elif args.arch_name=='munet_pmi':
+        model = SegPMIUNet(args.input_ch,args.num_classes)
 
 
 
@@ -146,12 +148,13 @@ def main(gpu, args, current_dir):
                     Learning rate:   {args.lr}
                     Weight decay:   {args.weight_decay}
                     Dataset:   {args.dataset}
-                    Resize Input: {args.resize_input}
+                    Resize Crop Input: {args.resize_crop_input}
                     Input size: {args.input_size}
                     Resize size: {args.resize_size}
                     Input Channels: {args.input_ch}
                     PMI Neighbour Size: {args.neighbour_size}
                     PMI Phi Value: {args.phi_value}
+                    PMI Hist Eq: {args.histequalize_pmi}
                     Custom Message: {args.m}
                 ''')
     if args.resume:

@@ -17,7 +17,7 @@ def parse_eval_args(parser):
 
     # Location of ground truth and prediction maps
     parser.add_argument('--gt_path', default='/data/resist_data/datasets/sim_crack/test/gts',
-                        help='folder containing ground truth maps') # /data/resist_data/datasets/resist_set/gts
+                        help='folder containing ground truth maps') # /data/resist_data/datasets/resist_set/gts ,/data/resist_data/datasets/crack_segmentation_dataset/test/masks
     parser.add_argument('--pred_path', default='/home/ajaziri/resist_projects/SimCrack/workspace/eval_outputs/SimResist/unet/2022-09-22_09-39-19',
                         help='folder containing prediction maps. The basename of this folder will be used to name csv files')
 

@@ -1,3 +1,5 @@
+import argparse
+
 def parse_train_args(parser):
     # General Training parameters
     parser.add_argument('--no_batch_norm', default=False,
@@ -26,6 +28,20 @@ def parse_train_args(parser):
         help="Boolean to decide whether to use special weight initialization (delta orthogonal)",
     )
 
+
+    parser.add_argument(
+        "--histequalize_pmi",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="Use histogram equalization on PMI values"
+    )
+
+    parser.add_argument(
+        "--augment",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="Use data Augmentation during training"
+    )
 
 
     return parser

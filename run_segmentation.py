@@ -7,7 +7,7 @@ import torch
 from torch.utils.data import DataLoader
 from lib.arg_parser.general_args import parse_args
 from lib.models.unet import UNet
-from lib.models.munet import MultiUNet
+from lib.models.munet import SegPMIUNet,MultiUNet
 from lib.dataloaders.sim_dataloader import SimDataloader
 from lib.dataloaders.real_dataloader import RealDataloader
 from lib.dataloaders.multi_crack_set_dataloader import MultiSetDataloader
@@ -39,9 +39,12 @@ def main():
     if args.arch_name == 'unet' or args.arch_name == 'pmiunet':
         print('loading unet')
         model = UNet(args.input_ch, args.num_classes)
-
     elif args.arch_name == 'munet':
         model = MultiUNet(args.input_ch, args.num_classes)
+    elif args.arch_name =='munet_pmi':
+        model = SegPMIUNet(args.input_ch,args.num_classes)
+
+
 
 
     model = torch.nn.DataParallel(model, device_ids=list(
@@ -80,7 +83,7 @@ def main():
                     Training Epochs: {training_epochs}
                     Dataset:   {args.dataset}
                     Patchwise eval: {args.patchwise_eval}
-                    Resize Input: {args.resize_input}
+                    Resize Crop Input: {args.resize_crop_input}
                     Input Channels:  {args.input_ch}
                     Input size: {args.input_size}
                     Resize size: {args.resize_size}

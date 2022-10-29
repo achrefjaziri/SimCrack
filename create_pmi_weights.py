@@ -258,8 +258,10 @@ def save_patch_wise_pmi_maps(orig_img, args, pmi_dir, curr_img_name):
 
 
 if __name__ == "__main__":
-    args = parse_args()
+    os.environ["CUDA_VISIBLE_DEVICES"] = '3'
 
+    args = parse_args()
+    """
     mode ='test'
 
     pmi_dir = os.path.join(args.pmi_dir, f'{args.neighbour_size}_{args.phi_value}', mode)
@@ -283,11 +285,9 @@ if __name__ == "__main__":
 
         save_pmi_maps(input_img, args, pmi_dir, img_name)
 
-
-
-
     """
-        Dataset_test = RealDataloader(args)
+
+    Dataset_test = RealDataloader(args)
 
     test_load = \
         torch.utils.data.DataLoader(dataset=Dataset_test,
@@ -304,10 +304,6 @@ if __name__ == "__main__":
         print('image batch', batch, input_img.shape, img_name)
 
         save_patch_wise_pmi_maps(input_img, args, pmi_dir, img_name)
-    """
-
-
-
 
 
 

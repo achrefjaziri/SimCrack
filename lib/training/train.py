@@ -26,6 +26,7 @@ def train_model(model, data_train, loss_funcs,
     total_loss_depth = 0
     total_loss_seg = 0
     total_loss_normal = 0
+    total_loss_pmi = 0
     print('LEN TRAIN',len(data_train))
     with tqdm(total=len(data_train), desc=f'Epoch {epoch + 1}/{configs.num_epochs}', unit='batch') as pbar:
         for batch, (data) in enumerate(data_train):
@@ -53,13 +54,22 @@ def train_model(model, data_train, loss_funcs,
                 total_loss = total_loss + loss.item()
                 total_loss_seg = total_loss_seg + loss_seg.item()
                 total_loss_normal = total_loss_normal + loss_nrm.item()
-            else:
+            elif configs.arch_name=='munet_pmi':
+                pmi_maps = data['pmi_gt'].to(gpu)
 
+                output_seg, output_pmi = model(images)
+                loss_seg = loss_funcs['SEG'](output_seg, masks)
+                loss_pmi = loss_funcs['DEPTH'](output_pmi, pmi_maps) #use the  same loss used for depth estimation
+                loss = loss_seg + loss_pmi
+                loss.backward()
+                total_loss = total_loss + loss.item()
+                total_loss_seg = total_loss_seg + loss_seg.item()
+                total_loss_pmi = total_loss_pmi + loss_pmi.item()
+            else:
                 output_seg = model(images)
                 loss = loss_funcs['SEG'](output_seg, masks)
                 loss.backward()
                 total_loss = total_loss + loss.item()
-
             pbar.set_postfix(**{'loss (batch)': loss.item()})
             optimizer.step()
             optimizer.zero_grad()
@@ -70,6 +80,9 @@ def train_model(model, data_train, loss_funcs,
             total_acc = total_acc + f1_acc
     writer.add_scalar('train/Loss', total_loss / (batch + 1), epoch)
     writer.add_scalar('train/Accuracy', total_acc / (batch + 1), epoch)
+    if configs.arch_name=='munet_pmi':
+        writer.add_scalar('train/Loss_Pmi', total_loss_pmi / (batch + 1), epoch)
+        writer.add_scalar('train/Loss_Seg', total_loss_seg / (batch + 1), epoch)
     if configs.arch_name == 'munet':
         writer.add_scalar('train/Loss_Seg', total_loss_seg / (batch + 1), epoch)
         writer.add_scalar('train/Loss_Nrm', total_loss_normal / (batch + 1), epoch)

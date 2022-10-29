@@ -33,7 +33,7 @@ class MultiSetDataloader(Dataset):
         self.data_len = len(self.image_arr)
         print(f'data length for {mode}', self.data_len)
 
-        if self.configs.resize_input:
+        if self.configs.resize_crop_input:
             # transformations of the image tensor
             self.scale_size = self.configs.resize_size
             self.img_transforms = transforms.Compose([transforms.Resize([self.scale_size, self.scale_size]),
@@ -106,10 +106,11 @@ class MultiSetDataloader(Dataset):
             input_image = np.dot(input_image[..., :3], [0.299, 0.587, 0.114])
             input_image = np.expand_dims(input_image, axis=0)
         elif self.configs.input_ch == 1 and self.configs.arch_name =='pmiunet':
-            img  = input_image[:, :, 0]
-            img = (img - np.min(img)) / (np.max(img) - np.min(img))
-            img_adapteq = exposure.equalize_adapthist(img, clip_limit=0.03)
-            input_image = np.expand_dims(img_adapteq, axis=0)  # use only one PMI scale
+            img = input_image[:, :, 0]
+            if args.histequalize_pmi:
+                img = (img - np.min(img)) / (np.max(img) - np.min(img))
+                img = exposure.equalize_adapthist(img, clip_limit=0.03)
+            input_image = np.expand_dims(img, axis=0)  # use only one PMI scale
         else:
             input_image = input_image.transpose(2,0,1)  #Permute axis to obtain image with shape (c,h,w)
 
@@ -159,14 +160,14 @@ class MultiSetDataloader(Dataset):
         mask_path = img_path.replace("images", "masks")  # This probably needs to be changed depending on our structure
 
         if self.configs.arch_name == 'pmiunet':
-            pmi_path = os.path.join(self.configs.pmi_dir,f'{self.configs.neighbour_size}_{self.configs.phi_value}'
+            pmi_path = os.path.join(self.configs.pmi_dir,self.configs.dataset,f'{self.configs.neighbour_size}_{self.configs.phi_value}'
                                     ,self.mode,os.path.basename(mask_path)+'.npy')
             image = np.load(pmi_path)
         else:
             image = Image.open(img_path)
 
         mask = Image.open(mask_path)
-        if self.configs.resize_input:
+        if self.configs.resize_crop_input:
             img, gt = self.transform_crop_downsize_combo(image, mask)
         else:
             img, gt = self.transform(image, mask)

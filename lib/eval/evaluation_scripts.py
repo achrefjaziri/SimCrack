@@ -60,8 +60,9 @@ def eval_model_patchwise(model, data_test, storage_directory='prediction',args= 
                 current_img = F.interpolate(current_img, size=(input_size, input_size), mode='bicubic', align_corners=False)
 
                 if args.arch_name =='munet':
-                    y, seg_output, x = model(current_img)
-
+                    _, seg_output, _ = model(current_img)
+                elif args.arch_name =='munet_pmi':
+                    seg_output, _ = model(current_img)
                 else:
                     seg_output = model(current_img)
 
@@ -110,8 +111,9 @@ def eval_model(model, data_test, storage_directory='prediction', args = None,dev
         with torch.no_grad():
             image = data['input'].to(device)
             if args.arch_name == 'munet':
-                y,output,x = model(image)
-
+                _,output,_ = model(image)
+            elif args.arch_name == 'munet_pmi':
+                output, _ = model(image)
             else:
                 output = model(image)
             prediction = torch.argmax(output, dim=1).float()

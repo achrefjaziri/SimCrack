@@ -100,7 +100,7 @@ def parse_general_args(parser):
     )
 
     parser.add_argument(
-        "--resize_input",
+        "--resize_crop_input",
         default=False,
         action=argparse.BooleanOptionalAction,
         help="If true the image will be resized to resize_size and then cropped to input_size"

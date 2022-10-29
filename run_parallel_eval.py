@@ -18,7 +18,7 @@ def run_parallel_eval():
     print('number of images:', len(res_arr))
 
     current_model_name = os.path.basename(os.path.abspath(os.path.join(args.pred_path, "..")))
-    csv_path = os.path.join(args.save_dir,'eval_results2',f'results_{args.dataset}_{current_model_name}_{os.path.basename(args.pred_path)}.csv')
+    csv_path = os.path.join(args.save_dir,'csv_results','eval_results_combi',f'results_{args.dataset}_{current_model_name}_{os.path.basename(args.pred_path)}.csv')
     print(csv_path)
     if os.path.exists(csv_path):
         # if the csv file exists remove the already evaluated images from res_arr

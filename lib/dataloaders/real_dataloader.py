@@ -22,9 +22,9 @@ from skimage import exposure
 
 
 class RealDataloader(Dataset):
-    """ Basic Dataloader for images
     """
-
+    Basic Dataloader for images
+    """
     def __init__(self, configs):
         super(RealDataloader, self).__init__()
         # all file names
@@ -32,8 +32,8 @@ class RealDataloader(Dataset):
         # TODO The next line is hardcoded and should change to allow for different difficulties. clean_cracks, cracks_with_corrosion etc..
         path_dir = os.path.join(self.configs.data_input_dir,'resist_set/images', '*')
         self.image_arr = glob.glob(path_dir)
+        print(len(self.image_arr))
         self.img_transforms = transforms.Compose([transforms.ToTensor()])
-
     def transform(self, image):
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         if self.configs.input_ch==1:
@@ -45,7 +45,6 @@ class RealDataloader(Dataset):
         else:
             input_image = self.img_transforms(image)
         return input_image
-
     def __getitem__(self, index):
         img_path = self.image_arr[index]
         image = Image.open(img_path)
@@ -57,14 +56,11 @@ class RealDataloader(Dataset):
             image = image.transpose(2, 0, 1)
             if self.configs.input_ch==1:
                 img = image[0]
-                img = (img - np.min(img)) / (np.max(img) - np.min(img))
-                #img_adapteq = exposure.equalize_adapthist(img, clip_limit=0.03)
-                #image = np.expand_dims(img_adapteq, axis=0)  # use only one PMI scale
-                image = np.expand_dims(image[0],axis=0)
-
+                if self.configs.histequalize_pmi:
+                    img = (img - np.min(img)) / (np.max(img) - np.min(img))
+                    img = exposure.equalize_adapthist(img, clip_limit=0.03)
+                image = np.expand_dims(img, axis=0)  # use only one PMI scale
             image = torch.tensor(image).float()
-
-
             return {'input': image, 'path': img_path}
         else:
 

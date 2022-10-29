@@ -35,6 +35,7 @@ def compute_scores(input_args):
     prediction = prediction/255
     prediction = prediction.astype(int)
 
+    #remove padding artifacts
     prediction[:,0]=0
     prediction[:,-1]=0
 
