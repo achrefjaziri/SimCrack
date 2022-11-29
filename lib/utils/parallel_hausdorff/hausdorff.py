@@ -12,7 +12,7 @@ from sklearn.gaussian_process.kernels import RBF
 
 def rbf(l1,l2):
     #c = cdist(l1,l2)
-    rbf = RBF()  # imported from sklearn.gaussian_process.kernels
+    rbf = RBF(length_scale=3)  # imported from sklearn.gaussian_process.kernels
     costMatrix = rbf.__call__(l1, l2)
     m2 = 1 - costMatrix
     #print(c)

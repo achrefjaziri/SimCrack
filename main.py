@@ -31,8 +31,8 @@ def train_and_val(args, model, train_loader, gpu, validation_loader, writer, cur
     #class_weights = torch.FloatTensor([1,50]).to(gpu)
     loss_functions = {
         'SEG': nn.CrossEntropyLoss(),
-        #'DEPTH': DepthLoss().to(gpu),
-        'DEPTH': nn.MSELoss().to(gpu),
+        'DEPTH': DepthLoss().to(gpu),
+        #'DEPTH': nn.MSELoss().to(gpu),
         'NRM': [nn.CosineEmbeddingLoss().to(gpu), nn.MSELoss().to(gpu)]
     }
     # Optimizer
@@ -204,7 +204,7 @@ def main(gpu, args, current_dir):
 
 if __name__ == "__main__":
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = '2,3'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1,2'
     os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     args = parse_args()
 
@@ -221,7 +221,7 @@ if __name__ == "__main__":
     else:
         model_id = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-    current_dir = os.path.join(args.save_dir, args.arch_name, args.dataset, model_id)
+    current_dir = os.path.join(args.save_dir,'trained_nets', args.arch_name, args.dataset, model_id)
     if not os.path.isdir(current_dir):
         os.makedirs(current_dir)
 

@@ -71,7 +71,7 @@ def compute_scores(input_args):
     else:
         # Returns the WCN scores and predIndices.shape[0]/gtIndices.shape[0] score
         if args.wcn:
-            wcn,per = minWeightBipartitAcc(gtIndices,predIndices)
+            wcn,per = minWeightBipartitAcc(gtIndices,predIndices,length_scales=args.rbf_l)
         else:
             wcn,per = None, None
 
@@ -94,18 +94,18 @@ def compute_scores(input_args):
 
         if args.f1_theta:
             if predIndices.shape[0] == 0:
-                f1_2,f1_5 = 0.0,0.0
+                f1_10,f1_5 = 0.0,0.0
             else:
                 # TODO check if this is correct?
-                f1_2 = theta_F1(ground_truth, prediction, 10)
+                f1_10 = theta_F1(ground_truth, prediction, 10)
                 f1_5 = theta_F1(ground_truth, prediction, 5)
         else:
-            f1_2,f1_5 = None, None
+            f1_10,f1_5 = None, None
 
         # Creating Header
         d = {'Img Name': [], 'F1': [], 'WCN': [], 'WCN_PER': [],
              'Hausdorff_EUC': [],
-             'Hausdorff_RBF': [], 'F1_Theta2': [], 'F1_Theta5': []}
+             'Hausdorff_RBF': [], 'F1_Theta10': [], 'F1_Theta5': []}
 
         df = pd.DataFrame(data=d)
 
@@ -113,7 +113,7 @@ def compute_scores(input_args):
                    'WCN': wcn, 'WCN_PER': per,
                    'Hausdorff_EUC':s_hausdorff_euc,
                    'Hausdorff_RBF': s_hausdorff_rbf,
-                   'F1_Theta2': f1_2, 'Acc1': f1_5}
+                   'F1_Theta10': f1_10, 'Acc': f1_5} #TODO correct last line
 
         save_eval_history(df, new_row, csv_file)
         print(f'Evaluation for {os.path.basename(paths[1])} is done.')

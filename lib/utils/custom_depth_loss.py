@@ -58,7 +58,7 @@ class DepthLoss(torch.nn.Module):
     grad_loss_term = self.im_gradient_loss(d, n_pixels)
     term_1 = torch.pow(d.view(-1, n_pixels), 2).mean(dim=1).sum()
     term_2 = (torch.pow(d.view(-1, n_pixels).sum(dim=1), 2) / (2 * (n_pixels ** 2))).sum()
-    return term_1 - term_2  #+ grad_loss_term
+    return term_1 - term_2  + grad_loss_term
 
 
 

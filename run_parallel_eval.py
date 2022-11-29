@@ -7,6 +7,48 @@ import glob, os
 import pandas as pd
 from lib.arg_parser.general_args import parse_args_eval
 from lib.eval.compute_scores import compute_scores
+from lib.utils.save_history import save_eval_history
+
+
+def get_log_value(f, class_name,type='string'):
+    matching = [s for s in f if class_name in s]
+    if matching==[]:
+        return ''
+    my_string = matching[-1]
+    if type=='boolean':
+        return bool(my_string.split(class_name, 1)[1])
+    elif type=='int':
+        return int(my_string.split(class_name, 1)[1])
+    elif type=='float':
+        return float(my_string.split(class_name, 1)[1])
+    else:
+        return my_string.split(class_name, 1)[1]
+
+
+def get_model_info(dict_res,args):
+    """
+    :param dict_res: dictionary containing all the current results
+    :return: a dictionary containing the following model information : training_set, batch_size,lr, patch_size, phi_value, hist_eq
+    """
+    train_dir = os.path.join(args.save_dir,'trained_nets',  dict_res['Arch'], args.train_dataset, dict_res['Model'])
+
+    train_log = os.path.join(train_dir,'run_history_0.log') #contains info about training batch size, lr , phi_values etc.
+
+    eval_log= os.path.join(args.pred_path,'run_history.log') # contains the values of patch sizes
+
+    with open(train_log) as f:
+        f = f.readlines()
+
+    dict_res['Batch_size'] = get_log_value(f,'Batch size:')
+    dict_res['Lr'] = get_log_value(f,'Learning rate:')
+    dict_res['Phi_value'] = get_log_value(f,'PMI Phi Value:')
+    dict_res['Hist_eq'] = get_log_value(f,'PMI Hist Eq:')
+
+    with open(eval_log) as f:
+        f = f.readlines()
+    dict_res['Patch_size'] = get_log_value(f,'Resize Size:')
+    dict_res['Eval_mode'] = get_log_value(f,'Patchwise eval:')
+
 
 
 def run_parallel_eval():
@@ -18,7 +60,7 @@ def run_parallel_eval():
     print('number of images:', len(res_arr))
 
     current_model_name = os.path.basename(os.path.abspath(os.path.join(args.pred_path, "..")))
-    csv_path = os.path.join(args.save_dir,'csv_results','eval_results_combi',f'results_{args.dataset}_{current_model_name}_{os.path.basename(args.pred_path)}.csv')
+    csv_path = os.path.join(args.save_dir,'experimental_results',f'eval_results_{args.dataset}',f'{current_model_name}_{os.path.basename(args.pred_path)}.csv')
     print(csv_path)
     if os.path.exists(csv_path):
         # if the csv file exists remove the already evaluated images from res_arr
@@ -50,6 +92,31 @@ def run_parallel_eval():
     print('Args list done. Starting evaluation now..')
     p.map(compute_scores, args_list)
     print("Saving the results..")
+
+
+    print('Computing avg accuracy')
+
+    avg_acc_csv_path=os.path.join(args.save_dir,'experimental_results',f'avg_results_{args.dataset}.csv')
+
+    df = pd.read_csv(csv_path)
+    print(df)
+    dict_res = df.agg({'WCN': 'mean', 'WCN_PER': 'mean', 'F1': 'mean', 'F1_Theta10': 'mean', 'Hausdorff_RBF': 'mean',
+                       'Hausdorff_EUC': 'mean'}).to_dict()
+    dict_res['Model'] = os.path.basename(args.pred_path) #os.path.basename(csv_path).replace('.csv', '')
+    dict_res['Arch'] = current_model_name
+    dict_res['Rbf_l'] =args.rbf_l
+
+    get_model_info(dict_res)
+
+    # TODO adjust this Creating Header
+    d = {'Model': [],'Arch': [],'Training_set':[], 'Batch_size':[],'Lr':[],'Phi_value':[],'Hist_eq':[],'Eval_mode':[],'Patch_size':[],'Rbf_l':[],
+         'F1': [], 'WCN': [], 'WCN_PER': [],
+         'Hausdorff_EUC': [],
+         'Hausdorff_RBF': [], 'F1_Theta10': []}
+
+    df_all = pd.DataFrame(data=d)
+    save_eval_history(df_all, dict_res, avg_acc_csv_path)
+
 
 if __name__=="__main__":
     run_parallel_eval()

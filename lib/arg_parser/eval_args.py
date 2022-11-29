@@ -21,6 +21,7 @@ def parse_eval_args(parser):
     parser.add_argument('--pred_path', default='/home/ajaziri/resist_projects/SimCrack/workspace/eval_outputs/SimResist/unet/2022-09-22_09-39-19',
                         help='folder containing prediction maps. The basename of this folder will be used to name csv files')
 
+
     parser.add_argument(
         "--save_dir",
         default="./workspace",
@@ -32,11 +33,18 @@ def parse_eval_args(parser):
                              'This argument is needed because each Dataset has a different naming scheme.'
                              'Available Datasets: SimResist, RealResist, CrackForest')
 
+    parser.add_argument('--train_dataset', default='SimResist',
+                        help='Dataset used to train the network. '
+                             'This argument is needed because we want to get some arguments from training log files')
+
     parser.add_argument(
         "--num_cpus",
         default=32,
         type=int,
         help="Number of cpu cores used for parallel evaluation",
     )
+
+    parser.add_argument('--rbf_l', type=int, default=5,
+                        help='l for rbf kernel')
 
     return parser

@@ -72,7 +72,7 @@ def iou_numpy(outputs: np.array, labels: np.array):
     return iou.mean()  # Or thresholded.mean()
 
 
-def minWeightBipartitAcc(gtIndices, predIndices):
+def minWeightBipartitAcc(gtIndices, predIndices,length_scales=5):
     # gtIndices = np.argwhere(gt) #np array of shape (nb_of_white_pixesl,2)
     # predIndices = np.argwhere(prediction)  #np array of shape (nb_of_white_pixesl,2)
     if gtIndices.shape[0] == 0:
@@ -82,7 +82,7 @@ def minWeightBipartitAcc(gtIndices, predIndices):
         # print("pred length ",predIndices.shape[0])
         return 0, None
 
-    rbf = RBF(length_scale=5)  # imported from sklearn.gaussian_process.kernels
+    rbf = RBF(length_scale=length_scales)  # imported from sklearn.gaussian_process.kernels
     costMatrix = rbf.__call__(gtIndices, predIndices)
     m2 = 1 - costMatrix
     try:
