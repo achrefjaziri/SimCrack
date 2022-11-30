@@ -18,6 +18,7 @@ def get_log_value(f, class_name,type='string'):
     if type=='boolean':
         return bool(my_string.split(class_name, 1)[1])
     elif type=='int':
+        print('what I extracted Int',my_string.split(class_name, 1)[1])
         return int(my_string.split(class_name, 1)[1])
     elif type=='float':
         return float(my_string.split(class_name, 1)[1])
@@ -39,15 +40,16 @@ def get_model_info(dict_res,args):
     with open(train_log) as f:
         f = f.readlines()
 
-    dict_res['Batch_size'] = get_log_value(f,'Batch size:')
-    dict_res['Lr'] = get_log_value(f,'Learning rate:')
-    dict_res['Phi_value'] = get_log_value(f,'PMI Phi Value:')
-    dict_res['Hist_eq'] = get_log_value(f,'PMI Hist Eq:')
+    dict_res['Batch_size'] = get_log_value(f,'Batch size:',type='int')
+    dict_res['Lr'] = get_log_value(f,'Learning rate:',type='float')
+    dict_res['Phi_value'] = get_log_value(f,'PMI Phi Value:',type='float')
+    dict_res['Hist_eq'] = get_log_value(f,'PMI Hist Eq:',type='boolean')
 
     with open(eval_log) as f:
         f = f.readlines()
-    dict_res['Patch_size'] = get_log_value(f,'Resize Size:')
-    dict_res['Eval_mode'] = get_log_value(f,'Patchwise eval:')
+    dict_res['Patch_size'] = get_log_value(f,'Resize size:',type='int')
+    print('resize Size',dict_res['Patch_size'] )
+    dict_res['Eval_mode'] = get_log_value(f,'Patchwise eval:',type='boolean')
 
 
 
@@ -93,7 +95,6 @@ def run_parallel_eval():
     p.map(compute_scores, args_list)
     print("Saving the results..")
 
-
     print('Computing avg accuracy')
 
     avg_acc_csv_path=os.path.join(args.save_dir,'experimental_results',f'avg_results_{args.dataset}.csv')
@@ -105,8 +106,9 @@ def run_parallel_eval():
     dict_res['Model'] = os.path.basename(args.pred_path) #os.path.basename(csv_path).replace('.csv', '')
     dict_res['Arch'] = current_model_name
     dict_res['Rbf_l'] =args.rbf_l
+    dict_res['Training_set'] =args.train_dataset
 
-    get_model_info(dict_res)
+    get_model_info(dict_res,args)
 
     # TODO adjust this Creating Header
     d = {'Model': [],'Arch': [],'Training_set':[], 'Batch_size':[],'Lr':[],'Phi_value':[],'Hist_eq':[],'Eval_mode':[],'Patch_size':[],'Rbf_l':[],
@@ -121,6 +123,12 @@ def run_parallel_eval():
 if __name__=="__main__":
     run_parallel_eval()
 
+    #TODO first get all models from trained_nets
+    #Function to get all args for each one
+    #Function to check what is already computed in csv
+    #Run segmentation script
+    #after all of them are done. get the paths for all sets in ajaziri
+    #Run parallel eval for each one
 
 
 
