@@ -4,6 +4,13 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 
+def make_csv_file(header,file_name):
+    if not os.path.exists(os.path.dirname(file_name)):
+        os.makedirs(os.path.dirname(file_name))
+    df = pd.DataFrame(data=header)
+    with open(file_name, 'a') as f:
+        df.to_csv(f, mode='a', header=f.tell() == 0)
+
 
 def save_eval_history(header, new_row, file_name):
     """ export data to csv format

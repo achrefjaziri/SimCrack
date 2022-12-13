@@ -5,7 +5,7 @@ import os
 import torch
 import numpy as np
 from lib.arg_parser import train_args
-from lib.arg_parser.eval_args import parse_eval_args
+from lib.arg_parser.eval_args import parse_evaluation_args,parse_common_evaluation_args
 from lib.arg_parser.pmi_args import parse_pmi_args
 
 
@@ -16,6 +16,7 @@ def parse_args():
     parser = parse_general_args(parser)
     parser = train_args.parse_train_args(parser)
     parser = parse_pmi_args(parser)
+    parser = parse_evaluation_args(parser)
 
     args = parser.parse_args()
 
@@ -28,12 +29,18 @@ def parse_args_eval():
     # load parameters and options
     parser = argparse.ArgumentParser(description='Model Evaluation')
 
-    parser = parse_eval_args(parser)
+    parser = parse_common_evaluation_args(parser)
+
+    parser = parse_evaluation_args(parser)
+
 
     args = parser.parse_args()
 
     args.time = time.ctime()
     return args
+
+
+
 
 
 def parse_general_args(parser):
