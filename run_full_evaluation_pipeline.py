@@ -15,6 +15,13 @@ import torch
 from torch.utils.data import DataLoader
 from run_segmentation import predict_cracks
 
+
+def str_to_bool(s):
+    #print('str',s)
+    if 'True' in s:
+         return True
+    elif 'False' in s:
+         return False
 def get_log_value(f, class_name, type='string'):
     '''
     Extracts parameter value from .log file
@@ -36,7 +43,11 @@ def get_log_value(f, class_name, type='string'):
 
     my_string = matching[-1]
     if type == 'boolean':
-        return bool(my_string.split(class_name, 1)[1])
+        #print('newwww')
+        out_string= my_string.split(class_name, 1)[1]
+        out_string = out_string.replace("\n", "")
+        #print(my_string.split(class_name, 1)[1], str_to_bool('False'), str_to_bool(out_string))
+        return str_to_bool(out_string)
     elif type == 'int':
         return int(my_string.split(class_name, 1)[1])
     elif type == 'float':
@@ -65,22 +76,24 @@ def get_info(model_path):
     input_ch = get_log_value(f, 'Input Channels:', type='int')
     arch_name = get_log_value(f, 'Architecture:', type='string')
     train_dataset = get_log_value(f, 'Dataset:', type='string')
+    set_size = get_log_value(f, 'Set Size:', type='string')
 
+    fuse_pred = get_log_value(f, 'Fuse Predictions:', type='boolean')
+    att_connections = get_log_value(f, 'Attention Connections:', type='boolean')
+    cons_loss = get_log_value(f, 'Consistency Loss:', type='boolean')
+    #print('CONS LOSS',cons_loss)
     if train_dataset=='':
         train_dataset='SimResist'
     if input_ch==0:
         input_ch=True
 
-    return arch_name, train_dataset, phi_value, hist_eq, input_ch
+    return arch_name, train_dataset,set_size, phi_value, hist_eq, input_ch, fuse_pred, att_connections, cons_loss
 
 
 if __name__ == "__main__":
 
     args = parse_args_eval()
     all_trained_networks = glob.glob(os.path.join(args.save_dir, 'trained_nets', '*', '*', '*'))
-
-
-
 
     # sanity check to remove all empty directories
     non_empty_dir = []
@@ -92,8 +105,8 @@ if __name__ == "__main__":
 
 
     for model_path in all_trained_networks:
-        print('current Model....',model_path)
-        arch_name, train_dataset, phi_value, hist_eq, input_ch = get_info(model_path)
+        print('current Model....', model_path)
+        arch_name, train_dataset, set_size, phi_value, hist_eq, input_ch, fuse_pred, att_connections,cons_loss = get_info(model_path)
 
         args_inference = parse_args()
         args_inference.test_mode = True
@@ -106,6 +119,10 @@ if __name__ == "__main__":
         args_inference.input_size = args.input_size
         args_inference.patchwise_eval = args.patchwise_eval
         args_inference.dataset = args.dataset
+        args_inference.fuse_predictions = fuse_pred
+        args_inference.att_connection = att_connections
+        args_inference.cons_loss = cons_loss
+        print(fuse_pred,att_connections,cons_loss)
         predict_cracks(args_inference)
 
         pred_path = os.path.join(args.save_dir, "eval_outputs", args.dataset, arch_name, os.path.basename(model_path))
@@ -113,6 +130,7 @@ if __name__ == "__main__":
         args_eval = parse_args_eval()
         args_eval.pred_path = pred_path
         args_eval.train_dataset = train_dataset
+        args_eval.set_size = set_size
 
         evaluate(args_eval)
 

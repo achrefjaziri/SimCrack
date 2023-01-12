@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 from lib.arg_parser.general_args import parse_args
 from lib.models.unet import UNet
 from lib.models.munet import SegPMIUNet, MultiUNet
+from lib.models.consnet import AttU_Net, ConsNet
 from lib.dataloaders.sim_dataloader import SimDataloader
 from lib.dataloaders.real_dataloader import RealDataloader
 from lib.dataloaders.multi_crack_set_dataloader import MultiSetDataloader
@@ -41,6 +42,13 @@ def predict_cracks(args):
         model = MultiUNet(args.input_ch, args.num_classes)
     elif args.arch_name == 'munet_pmi':
         model = SegPMIUNet(args.input_ch, args.num_classes)
+    elif args.arch_name=='att_unet':
+        model = AttU_Net(args.input_ch,args.num_classes)
+    elif args.arch_name == 'cons_unet':
+        print('args',args.cons_loss)
+        model = ConsNet(args.input_ch, args.num_classes, att=args.att_connection, consistent_features=args.cons_loss,
+                        img_size=args.input_size)
+
 
     model = torch.nn.DataParallel(model, device_ids=list(
         range(torch.cuda.device_count()))).cuda()
@@ -57,7 +65,7 @@ def predict_cracks(args):
     print('Loading data..')
     # Data Loader
     if args.dataset == 'SimResist':
-        test_set = SimDataloader(args, mode="test")
+        test_set = SimDataloader(args, mode="val")
     elif args.dataset == 'RealResist':
         test_set = RealDataloader(args)
     elif args.dataset == 'MultiSet':
@@ -91,6 +99,6 @@ def predict_cracks(args):
 
 if __name__ == "__main__":
     print(" Evaluating semantic segmentation model...")
-    os.environ["CUDA_VISIBLE_DEVICES"] = '2'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '3'
     args = parse_args()
     predict_cracks(args)

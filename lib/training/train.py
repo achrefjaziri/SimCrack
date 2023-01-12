@@ -37,12 +37,10 @@ def train_model(model, data_train, loss_funcs,
             if configs.arch_name == 'munet':
                 depths = data['depth'].to(gpu)
                 nrms = data['normal'].to(gpu)
-                y = torch.ones((masks.shape[0], masks.shape[0], masks.shape[1], masks.shape[1])).cuda() #used to evaluate cosine similarity
                 output_nrm, output_seg, output_depth = model(images)
-                loss_nrm = loss_funcs['NRM'][0](output_nrm, nrms, y) + loss_funcs['NRM'][1](output_nrm, nrms)
+                loss_nrm = loss_funcs['NRM'][1](output_nrm, nrms)
                 loss_seg = loss_funcs['SEG'](output_seg, masks)
                 loss_depth = loss_funcs['DEPTH'](output_depth, depths)
-                print(batch, "Seg: ", loss_seg.item(), "depth: ", loss_depth.item(), "nrm: ", loss_nrm.item())
                 if (loss_depth.item() == float("nan")) or (np.isnan(loss_depth.item())):
                     # Depth is skipped sometimes...  Some depth maps are corrupted.
                     loss = loss_seg + loss_nrm
@@ -55,8 +53,7 @@ def train_model(model, data_train, loss_funcs,
                 total_loss_seg = total_loss_seg + loss_seg.item()
                 total_loss_normal = total_loss_normal + loss_nrm.item()
             elif configs.arch_name=='munet_pmi':
-                pmi_maps = data['pmi_gt'].to(gpu)
-
+                pmi_maps = data['pmi_map'].to(gpu)
                 output_seg, output_pmi = model(images)
                 loss_seg = loss_funcs['SEG'](output_seg, masks)
                 loss_pmi = loss_funcs['DEPTH'](output_pmi, pmi_maps) #use the  same loss used for depth estimation
@@ -65,6 +62,17 @@ def train_model(model, data_train, loss_funcs,
                 total_loss = total_loss + loss.item()
                 total_loss_seg = total_loss_seg + loss_seg.item()
                 total_loss_pmi = total_loss_pmi + loss_pmi.item()
+            elif configs.arch_name=='cons_unet':
+                pmi_maps = data['pmi_map'].to(gpu)
+                output_seg,output_seg_pmi,cons_loss = model(images,pmi_maps)
+                loss_rgb = loss_funcs['SEG'](output_seg, masks)
+                loss_pmi = loss_funcs['SEG'](output_seg_pmi, masks)
+                if configs.cons_loss:
+                    loss = loss_pmi+ loss_rgb + cons_loss
+                else:
+                    loss = loss_pmi + loss_rgb
+                loss.backward()
+                total_loss = total_loss + loss.item()
             else:
                 output_seg = model(images)
                 loss = loss_funcs['SEG'](output_seg, masks)
@@ -74,9 +82,13 @@ def train_model(model, data_train, loss_funcs,
             optimizer.step()
             optimizer.zero_grad()
             pbar.update(1)
-            prediction_map = torch.argmax(output_seg, dim=1).float()
-            f1_acc = f1_score(masks.detach().cpu().numpy().ravel(), prediction_map.detach().cpu().numpy().ravel(),
-                           average='binary')
+            prediction_map = torch.argmax(output_seg, dim=1).float().detach().cpu().numpy()
+            if configs.arch_name=='cons_unet' and configs.fuse_predictions:
+                prediction_map_pmi = torch.argmax(output_seg_pmi, dim=1).float().detach().cpu().numpy()
+                prediction_map = np.add(prediction_map, prediction_map_pmi)
+                prediction_map = prediction_map > 0.5
+                #combined_prediction = combined_prediction.astype(int)
+            f1_acc = f1_score(masks.detach().cpu().numpy().ravel(), prediction_map.ravel(), average='binary')
             total_acc = total_acc + f1_acc
     writer.add_scalar('train/Loss', total_loss / (batch + 1), epoch)
     writer.add_scalar('train/Accuracy', total_acc / (batch + 1), epoch)

@@ -2,10 +2,10 @@
 
 ## Training Models ##
 ```
-python main.py  --arch_name  unet --dataset  SimResist --batch_size 16 --resize_crop_input --input_size 256
+python main.py  --arch_name  unet --dataset  SimResist --batch_size 8 --resize_crop_input --input_size 256 --input_ch 1
 ```
 
-Train Munet pmi
+Train Munet-pmi
 ```
 python main.py --arch_name munet_pmi --dataset SimResist --batch_size 16 --resize_input --input_size 256 --input_ch 1 --histequalize_pmi --num_epochs 100
 ```
@@ -14,9 +14,6 @@ To Train Models with PMI calculations. It is preferable to use pre-calculated PM
 ```
 python3 create_pmi_weights.py --phi_value 1.25 --no-resize_crop_input --resize_size 512 --input_size 512 --input_ch 3
 ```
-
-
-
 
 ## Evaluation ##
 
@@ -40,3 +37,12 @@ python run_segmentation.py
 ```
 
 
+Full Pipeline Evaluation
+```
+python run_full_evaluation_pipeline.py 
+--dataset RealResist
+--gt_path  path/to/ground_truth_masks
+--patch_wise_eval 
+```
+
+python run_full_evaluation_pipeline.py  --dataset RealResist  --gt_path  /data/resist_data/datasets/resist_set/gts  --patchwise_eval

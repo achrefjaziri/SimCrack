@@ -43,5 +43,32 @@ def parse_train_args(parser):
         help="Use data Augmentation during training"
     )
 
+    parser.add_argument(
+        "--att_connection",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="Use histogram equalization on PMI values"
+    )
+
+    parser.add_argument(
+        "--cons_loss",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="Use data Augmentation during training"
+    )
+    parser.add_argument(
+        "--adain",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="Use data Augmentation during training"
+    )
+    parser.add_argument(
+        "--fuse_predictions",
+        default=False,
+        action=argparse.BooleanOptionalAction,
+        help="Use data Augmentation during training"
+    )
+
+
 
     return parser

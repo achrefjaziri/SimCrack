@@ -7,7 +7,7 @@ import glob, os
 import pandas as pd
 from lib.arg_parser.general_args import parse_args_eval
 from lib.eval.compute_scores import compute_scores
-from lib.utils.save_history import save_eval_history, make_csv_file
+from lib.utils.save_history import save_eval_history, make_csv_file,remove_duplicate_headers
 
 
 def get_log_value(f, class_name, type='string'):
@@ -94,7 +94,7 @@ def evaluate(args):
     print('Computing avg accuracy')
 
     avg_acc_csv_path = os.path.join(args.save_dir, 'experimental_results', f'avg_results_{args.dataset}.csv')
-
+    remove_duplicate_headers(csv_path=csv_path)
     df = pd.read_csv(csv_path)
     #df = df[df.WCN.str.contains('WCN') == False] # remove header duplicates
     df[df.ne(df.columns).any(1)]
@@ -105,10 +105,12 @@ def evaluate(args):
     dict_res['Arch'] = current_model_name
     dict_res['Rbf_l'] = args.rbf_l
     dict_res['Training_set'] = args.train_dataset
+    dict_res['Set_size'] = args.set_size
+
     get_model_info(dict_res, args)
 
     # TODO adjust this Creating Header
-    d = {'Model': [], 'Arch': [], 'Training_set': [], 'Batch_size': [], 'Lr': [], 'Phi_value': [], 'Hist_eq': [],
+    d = {'Model': [], 'Arch': [], 'Training_set': [], 'Set_size':[], 'Batch_size': [], 'Lr': [], 'Phi_value': [], 'Hist_eq': [],
          'Eval_mode': [], 'Patch_size': [], 'Rbf_l': [],
          'F1': [], 'WCN': [], 'WCN_PER': [],
          'Hausdorff_EUC': [],

@@ -62,8 +62,21 @@ class RealDataloader(Dataset):
                 image = np.expand_dims(img, axis=0)  # use only one PMI scale
             image = torch.tensor(image).float()
             return {'input': image, 'path': img_path}
+        elif self.configs.arch_name =='cons_unet':
+            pmi_path = os.path.join(self.configs.pmi_dir, f'{self.configs.neighbour_size}_{self.configs.phi_value}'
+                                    , 'RealResist', os.path.basename(img_path) + '.npy')
+            image_pmi = np.load(pmi_path)
+            image_pmi = image_pmi.transpose(2, 0, 1)
+            if self.configs.input_ch == 1:
+                img = image_pmi[0]
+                if self.configs.histequalize_pmi:
+                    img = (img - np.min(img)) / (np.max(img) - np.min(img))
+                    img = exposure.equalize_adapthist(img, clip_limit=0.03)
+                image_pmi = np.expand_dims(img, axis=0)  # use only one PMI scale
+            image_pmi = torch.tensor(image_pmi).float()
+            image = self.transform(image)
+            return {'input': image,'pmi_map':image_pmi, 'path': img_path}
         else:
-
             img = self.transform(image)
             return {'input': img, 'path': img_path}
 

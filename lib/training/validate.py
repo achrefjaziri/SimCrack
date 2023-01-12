@@ -28,17 +28,27 @@ def validate_model(model, data_test, loss_funcs, epoch, writer, storage_director
             mask = data['gt'].to(gpu)
             if config.arch_name == 'munet':
                 # we only care about the segmentation output here
-                y, output, x = model(image)
+                _, output, _ = model(image)
             elif config.arch_name=='munet_pmi':
-                output, x = model(image)
+                output, _ = model(image)
+            elif config.arch_name=='cons_unet':
+                pmi_maps = data['pmi_map'].to(gpu)
+                output, output_pmi,_ = model(image,pmi_maps)
             else:
                 output = model(image)
             loss = loss_funcs['SEG'](output, mask)
-            prediction = torch.argmax(output, dim=1).float()
+            prediction = torch.argmax(output, dim=1).float().detach().cpu().numpy()
+
+            if config.arch_name=='cons_unet' and config.fuse_predictions:
+                loss_pmi = loss_funcs['SEG'](output_pmi, mask)
+                prediction_pmi = torch.argmax(output_pmi, dim=1).float().detach().cpu().numpy()
+                loss += loss_pmi
+                prediction = np.add(prediction, prediction_pmi)
+                prediction = prediction > 0.5
 
             total_loss += loss.item()
 
-            acc_val = f1_score(mask[0].detach().cpu().numpy().ravel(), prediction[0].detach().cpu().numpy().ravel())
+            acc_val = f1_score(mask.detach().cpu().numpy().ravel(), prediction.ravel())
 
             total_f1 += acc_val
 

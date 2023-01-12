@@ -123,7 +123,7 @@ class MultiSetDataloader(Dataset):
 
         return input_torch, mask_torch
 
-    def transform(self, image, mask, depth=None, normal=None):
+    def transform(self, image, mask,pmi_gt=None):
         ImageFile.LOAD_TRUNCATED_IMAGES = True
         """Image Cropping"""
         if self.configs.arch_name != 'pmiunet':
@@ -153,16 +153,31 @@ class MultiSetDataloader(Dataset):
         if self.configs.arch_name=='pmiunet':
             #out = F.interpolate(input_torch, size=(self.input_size, self.input_size), mode='bicubic', align_corners=False)
             image = F.resize(image,size=self.img_size)
-        return image, mask
+
+        if not pmi_gt is None:
+            pmi_gt = pmi_gt[:, :, 0]
+            if self.configs.histequalize_pmi:
+                pmi_gt = (pmi_gt - np.min(pmi_gt)) / (np.max(pmi_gt) - np.min(pmi_gt))
+                pmi_gt = exposure.equalize_adapthist(pmi_gt, clip_limit=0.03)
+            pmi_gt = np.expand_dims(pmi_gt, axis=0)  # use only one PMI scale
+            pmi_gt = torch.tensor(pmi_gt).float()
+            pmi_gt = F.resize(pmi_gt,size=self.img_size)
+        return image, mask,pmi_gt
 
     def __getitem__(self, index):
         img_path = self.image_arr[index]
         mask_path = img_path.replace("images", "masks")  # This probably needs to be changed depending on our structure
-
+        pmi_gt = None
         if self.configs.arch_name == 'pmiunet':
             pmi_path = os.path.join(self.configs.pmi_dir,self.configs.dataset,f'{self.configs.neighbour_size}_{self.configs.phi_value}'
                                     ,self.mode,os.path.basename(mask_path)+'.npy')
             image = np.load(pmi_path)
+        elif self.configs.arch_name == 'munet_pmi' or self.configs.arch_name == 'cons_unet':  # we use the pmi as ground truth to train multi path unet
+            pmi_path = os.path.join(self.configs.pmi_dir, self.configs.dataset,
+                                    f'{self.configs.neighbour_size}_{self.configs.phi_value}'
+                                    , self.mode, os.path.basename(mask_path) + '.npy')
+            pmi_gt = np.load(pmi_path)
+            image = Image.open(img_path)
         else:
             image = Image.open(img_path)
 
@@ -170,10 +185,17 @@ class MultiSetDataloader(Dataset):
         if self.configs.resize_crop_input:
             img, gt = self.transform_crop_downsize_combo(image, mask)
         else:
-            img, gt = self.transform(image, mask)
-        data = {'input': img,
-                'gt': gt,
-                'path': mask_path}
+            img, gt, pmi_gt = self.transform(image, mask,pmi_gt=pmi_gt)
+
+        if pmi_gt is None:
+            data = {'input': img,
+                    'gt': gt,
+                    'path': mask_path}
+        else:
+            data = {'input': img,
+                    'gt': gt,
+                    'pmi_map': pmi_gt,
+                    'path': mask_path}
         return data
 
     def __len__(self):
@@ -200,12 +222,4 @@ if __name__ == "__main__":
         plt.imshow(target_img)
         plt.show()
 
-    print('done!!')
-
-        #plt.Figure()
-        #plt.imshow(input_img,cmap='gray')
-        #plt.savefig(f"./sim_examples/input{batch}.png")
-
-        #plt.Figure()
-        #plt.imshow(target_img,cmap='gray')
-        #plt.savefig(f"./sim_examples/gt{batch}.png")
+        print('done!!')

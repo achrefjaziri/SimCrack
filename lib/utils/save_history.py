@@ -45,6 +45,51 @@ def save_models(model, optimizer, path, epoch):
     torch.save(checkpoint, path+"/best_model.pth.tar")
 
 
+def remove_duplicate_headers(csv_path):
+    import csv
+
+    # Open the original CSV file
+    with open(csv_path, 'r') as f:
+        # Create a CSV reader
+        reader = csv.reader(f)
+
+        # Read the first line of the CSV file and store it in a variable
+        headers = next(reader)
+
+        # Create an empty list to store the unique headers
+        unique_headers = []
+
+        # Iterate over the remaining lines of the CSV file
+        for row in reader:
+            # Split the line into a list of values
+            values = row
+
+            # Iterate over the list of values
+            for value in values:
+                # If the value is not already in the list of unique headers, add it
+                if value not in unique_headers:
+                    unique_headers.append(value)
+
+    # Open a new CSV file to write the unique headers
+    with open('unique_headers.csv', 'w') as f:
+        # Create a CSV writer
+        writer = csv.writer(f)
+
+        # Write the unique headers to the new CSV file
+        writer.writerow(unique_headers)
+
+        # Open the original CSV file again
+        with open(csv_path, 'r') as g:
+            # Create a CSV reader
+            reader = csv.reader(g)
+
+            # Skip the first line (which we already wrote to the new CSV file)
+            next(reader)
+
+            # Iterate over the remaining lines of the original CSV file
+            for row in reader:
+                # Write the line to the new CSV file
+                writer.writerow(row)
 def save_prediction_image_seg(img, mask, im_name, save_folder_name, acc_val, h_euc, h_rbf, wcn, f1, theta):
     """save images to save_path
         Args:

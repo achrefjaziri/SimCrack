@@ -3,7 +3,7 @@ import argparse
 def parse_common_evaluation_args(parser):
     parser.add_argument(
         "--save_dir",
-        default="./workspace",
+        default="/data/resist_data/SimCrack/workspace",
         help="Create directory to save results.",
     )
 
@@ -23,6 +23,12 @@ def parse_common_evaluation_args(parser):
         default=256,
         type=int,
         help=" Dimension of the input data",
+    )
+
+    parser.add_argument(
+        "--set_size",
+        default='',
+        help="Set size used for training",
     )
 
     return parser
@@ -57,9 +63,6 @@ def parse_evaluation_args(parser):
 
     parser.add_argument('--rbf_l', type=int, default=5,
                         help='l for rbf kernel')
-
-
-
 
     parser.add_argument(
         "--num_cpus",

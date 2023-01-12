@@ -17,6 +17,12 @@ def parse_args():
     parser = train_args.parse_train_args(parser)
     parser = parse_pmi_args(parser)
     parser = parse_evaluation_args(parser)
+    parser.add_argument(
+        "--subset_nb",
+        default=0,
+        type=int,
+        help="",
+    )
 
     args = parser.parse_args()
 
@@ -78,7 +84,7 @@ def parse_general_args(parser):
 
     parser.add_argument(
         "--save_dir",
-        default="./workspace",
+        default="/data/resist_data/SimCrack/workspace",
         help="Create directory to save results in. Training results are saved in ./workspace/arcg_name/run_number",
     )
 
@@ -88,6 +94,12 @@ def parse_general_args(parser):
         default='SimResist',
         help="Available Datasets: SimResist, RealResist, MultiSet",
     )
+    parser.add_argument(
+        "--set_size",
+        default='',
+        help="Set size used for training",
+    )
+
     parser.add_argument(
         "--partition_name",
         default='clean_cracks',

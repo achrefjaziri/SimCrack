@@ -10,7 +10,7 @@ if __name__=="__main__":
 
     all_csv_files = glob.glob(folder +'/*')
 
-    avg_acc_csv_path ="/home/ajaziri/resist_projects/SimCrack/workspace/experimental_results/avg_results_realResist.csv"
+    avg_acc_csv_path ="/home/ajaziri/resist_projects/SimCrack/workspace/experimental_results/avg_results_RealResist.csv"
 
     for file_path in all_csv_files:
         print(file_path)

@@ -39,7 +39,7 @@ class MultiUNet(nn.Module):
         self.up4N = up(128, 64)
         self.outdepth = outconv(64, 1)
         self.outnormals = outconv(64, 3)
-        self.outc = outconv(64,2)
+        self.outc = outconv(64,n_classes)
 
     def forward(self, x):
         """Define the forward pass"""
@@ -131,9 +131,6 @@ class MultiUNetEncoder(nn.Module):
         x4 = self.down3(x3)
         x5 = self.down4(x4)
         return {'x1':x1,'x2':x2,'x3':x3,'x4':x4,'x5':x5}
-
-
-
 
 
 class MultiUNetDecoder(nn.Module):

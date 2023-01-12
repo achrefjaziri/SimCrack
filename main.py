@@ -16,6 +16,7 @@ from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data.distributed import DistributedSampler
 from lib.models.unet import UNet
 from lib.models.munet import SegPMIUNet,MultiUNet
+from lib.models.consnet import AttU_Net, ConsNet
 from lib.dataloaders.sim_dataloader import SimDataloader
 from lib.dataloaders.multi_crack_set_dataloader import MultiSetDataloader
 from lib.training.train import train_model
@@ -106,19 +107,21 @@ def main(gpu, args, current_dir):
         world_size=args.world_size,
         rank=rank
     )
-
     torch.cuda.set_device(gpu)
-
     ############################################################
     # load model
     print('Loading Model...')
     # TODO add the other models
-    if args.arch_name=='unet' or args.arch_name=='pmiunet' :
+    if args.arch_name == 'unet' or args.arch_name == 'pmiunet':
         model = UNet(args.input_ch, args.num_classes)
-    elif args.arch_name=='munet_pmi':
+    elif args.arch_name == 'munet':
+        model = MultiUNet(args.input_ch, args.num_classes)
+    elif args.arch_name == 'munet_pmi':
         model = SegPMIUNet(args.input_ch,args.num_classes)
-
-
+    elif args.arch_name == 'att_unet':
+        model = AttU_Net(args.input_ch,args.num_classes)
+    elif args.arch_name == 'cons_unet':
+        model = ConsNet(args.input_ch,args.num_classes,att=args.att_connection,consistent_features=args.cons_loss,img_size=args.input_size)
 
     if args.resume:
         print("resuming training...")
@@ -148,13 +151,17 @@ def main(gpu, args, current_dir):
                     Learning rate:   {args.lr}
                     Weight decay:   {args.weight_decay}
                     Dataset:   {args.dataset}
+                    Set Size: {args.set_size}
                     Resize Crop Input: {args.resize_crop_input}
                     Input size: {args.input_size}
                     Resize size: {args.resize_size}
                     Input Channels: {args.input_ch}
-                    PMI Neighbour Size: {args.neighbour_size}
+                    PMI Neighbour Size: {args.neighbour_size} 
                     PMI Phi Value: {args.phi_value}
-                    PMI Hist Eq: {args.histequalize_pmi}
+                    PMI Hist Eq: {args.histequalize_pmi} 
+                    Fuse Predictions: {args.fuse_predictions}
+                    Attention Connections: {args.att_connection}
+                    Consistency Loss: {args.cons_loss}
                     Custom Message: {args.m}
                 ''')
     if args.resume:
@@ -174,15 +181,15 @@ def main(gpu, args, current_dir):
 
     # Data Loader
     if args.dataset == 'SimResist':
-        training_set = SimDataloader(args, mode="train")
-        validation_set = SimDataloader(args, mode="val")
+        training_set = SimDataloader(args, mode="train",set_size=args.set_size, filtering=False)
+        validation_set = SimDataloader(args, mode="val",filtering=False)
     else:
         training_set = MultiSetDataloader(args, mode="train")
         validation_set = MultiSetDataloader(args, mode="test")
 
     validation_loader = \
         torch.utils.data.DataLoader(dataset=validation_set,
-                                    num_workers=16, batch_size=args.batch_size, shuffle=False)
+                                    num_workers=32, batch_size=args.batch_size, shuffle=False)
 
     sampler = DistributedSampler(training_set, num_replicas=args.world_size, rank=rank, shuffle=True,
                                  drop_last=False)
@@ -190,7 +197,7 @@ def main(gpu, args, current_dir):
         training_set,
         batch_size=args.batch_size,
         shuffle=False,
-        num_workers=16,
+        num_workers=32,
         sampler=sampler)
 
     print('Start training...')
@@ -201,9 +208,7 @@ def main(gpu, args, current_dir):
     except KeyboardInterrupt:
         print("Training got interrupted.")
 
-
 if __name__ == "__main__":
-
     os.environ["CUDA_VISIBLE_DEVICES"] = '1,2'
     os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     args = parse_args()
