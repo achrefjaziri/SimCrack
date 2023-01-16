@@ -94,10 +94,11 @@ def evaluate(args):
     print('Computing avg accuracy')
 
     avg_acc_csv_path = os.path.join(args.save_dir, 'experimental_results', f'avg_results_{args.dataset}.csv')
-    remove_duplicate_headers(csv_path=csv_path)
-    df = pd.read_csv(csv_path)
+    #remove_duplicate_headers(csv_path=csv_path)
+    df = pd.read_csv(csv_path, delimiter=',', header=0)
     #df = df[df.WCN.str.contains('WCN') == False] # remove header duplicates
-    df[df.ne(df.columns).any(1)]
+    #df[df.ne(df.columns).any(1)]
+    df.drop(df.loc[df['Img Name'] == 'Img Name'].index, inplace=True)
 
     dict_res = df.agg({'WCN': 'mean', 'WCN_PER': 'mean', 'F1': 'mean', 'F1_Theta10': 'mean', 'Hausdorff_RBF': 'mean',
                        'Hausdorff_EUC': 'mean'}).to_dict()
