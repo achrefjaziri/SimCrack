@@ -162,6 +162,7 @@ def main(gpu, args, current_dir):
                     Fuse Predictions: {args.fuse_predictions}
                     Attention Connections: {args.att_connection}
                     Consistency Loss: {args.cons_loss}
+                    AdaIN: {args.adain}
                     Custom Message: {args.m}
                 ''')
     if args.resume:
@@ -209,7 +210,7 @@ def main(gpu, args, current_dir):
         print("Training got interrupted.")
 
 if __name__ == "__main__":
-    os.environ["CUDA_VISIBLE_DEVICES"] = '1,2'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '2,3'
     os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     args = parse_args()
 

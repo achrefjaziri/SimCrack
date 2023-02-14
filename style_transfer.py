@@ -268,7 +268,7 @@ if __name__=="__main__":
 
     adaIn_dir = os.path.join('/data/resist_data/adaIn_maps/sim_crack',mode)
 
-    sim_resist_data = SimDataloader(args,mode=mode,filtering=True,subset=True,subset_nb=args.subset_nb) #,remove_duplicated=adaIn_dir+'/*'
+    sim_resist_data = SimDataloader(args,mode=mode,filtering=True,subset=False,subset_nb=args.subset_nb) #,remove_duplicated=adaIn_dir+'/*'
 
     content_data = \
         torch.utils.data.DataLoader(dataset=sim_resist_data,

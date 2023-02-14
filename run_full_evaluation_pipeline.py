@@ -93,7 +93,7 @@ def get_info(model_path):
 if __name__ == "__main__":
 
     args = parse_args_eval()
-    all_trained_networks = glob.glob(os.path.join(args.save_dir, 'trained_nets', '*', '*', '*'))
+    all_trained_networks = glob.glob(os.path.join(args.save_dir, 'trained_nets', '*', '*', '*')) #2023-02-01_07-58-26
 
     # sanity check to remove all empty directories
     non_empty_dir = []

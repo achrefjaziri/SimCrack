@@ -71,7 +71,7 @@ def eval_model_patchwise(model, data_test, storage_directory='prediction',args= 
                     # Downsize image if needd
                     current_img_pmi = F.interpolate(current_img_pmi, size=(input_size, input_size), mode='bicubic',
                                                 align_corners=False)
-                    seg_output,seg_output_pmi, _ = model(current_img,current_img_pmi,skip_loss=True)
+                    seg_output,seg_output_pmi, _ = model(current_img,current_img_pmi)
 
                     out_pmi_np = torch.squeeze(seg_output_pmi).detach().cpu().numpy()
                     out_pmi_np_channel_1 = cv2.resize(out_pmi_np[0], (patch_size, patch_size))

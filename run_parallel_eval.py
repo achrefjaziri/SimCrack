@@ -41,6 +41,11 @@ def get_model_info(dict_res, args):
     with open(train_log) as f:
         f = f.readlines()
 
+    dict_res['Fuse_pred'] = get_log_value(f, 'Fuse Predictions:', type='boolean')
+    dict_res['Attn_conn'] = get_log_value(f, 'Attention Connections:', type='boolean')
+    dict_res['Cons_loss'] = get_log_value(f, 'Consistency Loss:', type='boolean')
+    dict_res['AdaIn'] = get_log_value(f, 'AdaIN:', type='boolean')
+    print('current dic',dict_res)
     dict_res['Batch_size'] = get_log_value(f, 'Batch size:', type='int')
     dict_res['Lr'] = get_log_value(f, 'Learning rate:', type='float')
     dict_res['Phi_value'] = get_log_value(f, 'PMI Phi Value:', type='float')
@@ -112,10 +117,12 @@ def evaluate(args):
 
     # TODO adjust this Creating Header
     d = {'Model': [], 'Arch': [], 'Training_set': [], 'Set_size':[], 'Batch_size': [], 'Lr': [], 'Phi_value': [], 'Hist_eq': [],
-         'Eval_mode': [], 'Patch_size': [], 'Rbf_l': [],
+         'Eval_mode': [], 'Patch_size': [], 'Rbf_l': [],'Fuse_pred':[],'Attn_conn':[],'Cons_loss':[],'AdaIn':[],
          'F1': [], 'WCN': [], 'WCN_PER': [],
          'Hausdorff_EUC': [],
          'Hausdorff_RBF': [], 'F1_Theta10': []}
+
+
 
     df_all = pd.DataFrame(data=d)
     save_eval_history(df_all, dict_res, avg_acc_csv_path)
