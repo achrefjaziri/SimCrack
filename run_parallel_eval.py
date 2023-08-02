@@ -8,7 +8,14 @@ import pandas as pd
 from lib.arg_parser.general_args import parse_args_eval
 from lib.eval.compute_scores import compute_scores
 from lib.utils.save_history import save_eval_history, make_csv_file,remove_duplicate_headers
+import warnings
+warnings.filterwarnings("ignore")
 
+def convert_bool(input_string):
+  if input_string=='false':
+    return False
+  else:
+    return True
 
 def get_log_value(f, class_name, type='string'):
     matching = [s for s in f if class_name in s]
@@ -16,9 +23,8 @@ def get_log_value(f, class_name, type='string'):
         return ''
     my_string = matching[-1]
     if type == 'boolean':
-        return bool(my_string.split(class_name, 1)[1])
+        return convert_bool(my_string.split(class_name, 1)[1].strip().lower())
     elif type == 'int':
-        print('what I extracted Int', my_string.split(class_name, 1)[1])
         return int(my_string.split(class_name, 1)[1])
     elif type == 'float':
         return float(my_string.split(class_name, 1)[1])
@@ -45,7 +51,6 @@ def get_model_info(dict_res, args):
     dict_res['Attn_conn'] = get_log_value(f, 'Attention Connections:', type='boolean')
     dict_res['Cons_loss'] = get_log_value(f, 'Consistency Loss:', type='boolean')
     dict_res['AdaIn'] = get_log_value(f, 'AdaIN:', type='boolean')
-    print('current dic',dict_res)
     dict_res['Batch_size'] = get_log_value(f, 'Batch size:', type='int')
     dict_res['Lr'] = get_log_value(f, 'Learning rate:', type='float')
     dict_res['Phi_value'] = get_log_value(f, 'PMI Phi Value:', type='float')
@@ -65,15 +70,27 @@ def evaluate(args):
     current_model_name = os.path.basename(os.path.abspath(os.path.join(args.pred_path, "..")))
     csv_path = os.path.join(args.save_dir, 'experimental_results', f'eval_results_{args.dataset}',
                             f'{current_model_name}_{os.path.basename(args.pred_path)}.csv')
-    print(csv_path)
     if os.path.exists(csv_path):
         # if the csv file exists remove the already evaluated images from res_arr
-        df = pd.read_csv(csv_path)
+        df = pd.read_csv(csv_path, delimiter=',',index_col=False)#
         evaluated_images = df['Img Name'].tolist()
         abs_path = os.path.abspath(res_arr[0])
         evaluated_images = [os.path.join(abs_path, img_name) for img_name in evaluated_images]
         set_new_images = set(res_arr) - set(evaluated_images)
         res_arr = list(set_new_images)
+    else:
+        # Creating Header
+        d = {'Img Name': [], 'F1': [], 'WCN': [], 'WCN_PER': [],
+             'Hausdorff_EUC': [],
+             'Hausdorff_RBF': [], 'F1_Theta10': [], 'clDice': []}
+
+        df = pd.DataFrame(data=d)
+
+        # create an empty data frame
+
+        # save the empty data frame to a CSV file
+        df.to_csv(csv_path, index=True)
+
 
     print('number of images left:', len(res_arr))
 
@@ -88,6 +105,9 @@ def evaluate(args):
         res_arr = [(args.gt_path + '/' + os.path.basename(img_path), img_path) for img_path in
                    res_arr]  # .replace('render_noise','gt') replace('.png','_annot.png') .replace('.jpg.png','_label.PNG') .replace('.png','_annot.png')
 
+
+    #df = pd.read_csv(csv_path, delimiter=',')
+
     #mp.set_start_method('spawn')
     p = Pool(args.num_cpus)
 
@@ -100,13 +120,13 @@ def evaluate(args):
 
     avg_acc_csv_path = os.path.join(args.save_dir, 'experimental_results', f'avg_results_{args.dataset}.csv')
     #remove_duplicate_headers(csv_path=csv_path)
-    df = pd.read_csv(csv_path, delimiter=',', header=0)
+    df = pd.read_csv(csv_path, delimiter=',', index_col=False)  #
     #df = df[df.WCN.str.contains('WCN') == False] # remove header duplicates
     #df[df.ne(df.columns).any(1)]
     df.drop(df.loc[df['Img Name'] == 'Img Name'].index, inplace=True)
 
     dict_res = df.agg({'WCN': 'mean', 'WCN_PER': 'mean', 'F1': 'mean', 'F1_Theta10': 'mean', 'Hausdorff_RBF': 'mean',
-                       'Hausdorff_EUC': 'mean'}).to_dict()
+                       'Hausdorff_EUC': 'mean','clDice':'mean'}).to_dict()
     dict_res['Model'] = os.path.basename(args.pred_path)  # os.path.basename(csv_path).replace('.csv', '')
     dict_res['Arch'] = current_model_name
     dict_res['Rbf_l'] = args.rbf_l
@@ -115,12 +135,13 @@ def evaluate(args):
 
     get_model_info(dict_res, args)
 
-    # TODO adjust this Creating Header
     d = {'Model': [], 'Arch': [], 'Training_set': [], 'Set_size':[], 'Batch_size': [], 'Lr': [], 'Phi_value': [], 'Hist_eq': [],
          'Eval_mode': [], 'Patch_size': [], 'Rbf_l': [],'Fuse_pred':[],'Attn_conn':[],'Cons_loss':[],'AdaIn':[],
          'F1': [], 'WCN': [], 'WCN_PER': [],
          'Hausdorff_EUC': [],
-         'Hausdorff_RBF': [], 'F1_Theta10': []}
+         'Hausdorff_RBF': [], 'F1_Theta10': [],'clDice': []}
+
+    print(dict_res)
 
 
 
@@ -133,9 +154,4 @@ if __name__ == "__main__":
     args = parse_args_eval()
     evaluate(args)
 
-    # TODO first get all models from trained_nets
-    # Function to get all args for each one
-    # Function to check what is already computed in csv
-    # Run segmentation script
-    # after all of them are done. get the paths for all sets in ajaziri
-    # Run parallel eval for each one
+

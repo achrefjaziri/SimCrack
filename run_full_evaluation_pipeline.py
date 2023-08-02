@@ -86,12 +86,12 @@ def get_info(model_path):
         train_dataset='SimResist'
     if input_ch==0:
         input_ch=True
-
     return arch_name, train_dataset,set_size, phi_value, hist_eq, input_ch, fuse_pred, att_connections, cons_loss
-
 
 if __name__ == "__main__":
 
+    os.environ["CUDA_VISIBLE_DEVICES"] = '2,3'
+    os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     args = parse_args_eval()
     all_trained_networks = glob.glob(os.path.join(args.save_dir, 'trained_nets', '*', '*', '*')) #2023-02-01_07-58-26
 
@@ -102,7 +102,6 @@ if __name__ == "__main__":
             non_empty_dir.append(path)
 
     all_trained_networks = non_empty_dir
-
 
     for model_path in all_trained_networks:
         print('current Model....', model_path)
@@ -134,34 +133,5 @@ if __name__ == "__main__":
 
         evaluate(args_eval)
 
-        '''
-        print('COMMAND',[python_exec, '/home/ajaziri/resist_projects/SimCrack/run_segmentation.py', '--test_mode',
-                        '--save_dir', args.save_dir, '--arch_name', arch_name, '--model_path',model_path, '--input_ch', str(input_ch),
-                        '--phi_value', str(phi_value),histequalize_pmi,'--input_size', str(args.input_size), patchwise_eval, '--dataset',args.dataset
-                        ])
-
-        subprocess.run([python_exec, '/home/ajaziri/resist_projects/SimCrack/run_segmentation.py', '--test_mode',
-                        '--save_dir', args.save_dir, '--arch_name', arch_name, '--model_path',model_path, '--input_ch', str(input_ch),
-                        '--phi_value', str(phi_value),histequalize_pmi,'--input_size', str(args.input_size), patchwise_eval, '--dataset',args.dataset
-                        ])
-
-
-        subprocess.run([python_exec, '/home/ajaziri/resist_projects/SimCrack/run_parallel_eval.py',
-                        '--save_dir', args.save_dir, '--gt_path', args.gt_path, '--pred_path', pred_path, '--rbf_l',
-                        str(args.rbf_l),
-                        '--train_dataset', train_dataset,
-                        '--dataset', args.dataset
-                        ])
-        '''
     print('all Eval Done..')
 
-# args
-# get name of all networks and their ids + parameters
-# check if they were already evaluated if yes remove from the list
-# do the run_segmentation and run_parallel_eval.py
-
-
-# Finish this script and start full on training.
-# Finish 3 Papers to the summary stack
-# Read One paper thorouly
-# Recap the functional analysis stuff

@@ -7,6 +7,7 @@ from PIL import Image
 from lib.utils.eval_metrics import minWeightBipartitAcc,theta_F1
 from lib.utils.save_history import save_eval_history
 from lib.utils.parallel_hausdorff.hausdorff import smooth_hausdorff
+from lib.utils.cldice import clDice
 import pandas as pd
 import numpy as np
 import math, os
@@ -45,15 +46,11 @@ def compute_scores(input_args):
     #print('ground truth shape',np.array(ground_truth).shape)
     mask_transforms = transforms.Compose([transforms.Resize([prediction.shape[1], prediction.shape[2]])])
     ground_truth = mask_transforms(ground_truth)
-    ground_truth = np.array(ground_truth, dtype=np.int)
+    ground_truth = np.array(ground_truth, dtype=np.int_)
     ground_truth = np.where(ground_truth > 0, 1, ground_truth)
     # delete separate color channel
     if args.dataset=='RealResist' or args.dataset=='SimResist':
         ground_truth = ground_truth[:, :, 0]
-
-
-
-
     #acc_val = iou_numpy(prediction, ground_truth)
     #print('final shapes,',ground_truth.shape,prediction.shape)
     acc_val = f1_score(ground_truth.ravel(),prediction.ravel(),average='binary')
@@ -75,10 +72,10 @@ def compute_scores(input_args):
         else:
             wcn,per = None, None
 
-        # if the predictions is empty while the ground truth contains a crack, we skip the computation for the hausdorff metric
+        #if the prediction is empty while the ground truth contains a crack, we skip the computation for the hausdorff metric
         if args.hausdorff_rbf:
             if predIndices.shape[0]==0:
-                s_hausdorff_rbf,s_hausdorff_euc =1.0,None
+                s_hausdorff_rbf =1.0
             else:
                 s_hausdorff_rbf = smooth_hausdorff(gtIndices, predIndices, distance='rbf')
         else:
@@ -86,7 +83,7 @@ def compute_scores(input_args):
 
         if args.hausdorff_euc:
             if predIndices.shape[0] == 0:
-                s_hausdorff_euc = 1.0 #TODO check if this is correct?
+                s_hausdorff_euc = 100.0
             else:
                 s_hausdorff_euc = smooth_hausdorff(gtIndices, predIndices, distance='euclidean')
         else:
@@ -94,18 +91,19 @@ def compute_scores(input_args):
 
         if args.f1_theta:
             if predIndices.shape[0] == 0:
-                f1_10,f1_5 = 0.0,0.0
+                f1_10 = 0.0
             else:
                 # TODO check if this is correct?
-                f1_10 = theta_F1(ground_truth, prediction, 10)
-                f1_5 = theta_F1(ground_truth, prediction, 5)
+                f1_10 = theta_F1(ground_truth, prediction, args.rbf_l)
         else:
-            f1_10,f1_5 = None, None
+            f1_10 = None
+
+        cldice_score= clDice(v_p=prediction,v_l=ground_truth)
 
         # Creating Header
         d = {'Img Name': [], 'F1': [], 'WCN': [], 'WCN_PER': [],
              'Hausdorff_EUC': [],
-             'Hausdorff_RBF': [], 'F1_Theta10': [], 'F1_Theta5': []}
+             'Hausdorff_RBF': [], 'F1_Theta10': [], 'clDice': []}
 
         df = pd.DataFrame(data=d)
 
@@ -113,18 +111,10 @@ def compute_scores(input_args):
                    'WCN': wcn, 'WCN_PER': per,
                    'Hausdorff_EUC':s_hausdorff_euc,
                    'Hausdorff_RBF': s_hausdorff_rbf,
-                   'F1_Theta10': f1_10, 'Acc': f1_5} #TODO correct last line
+                   'F1_Theta10': f1_10, 'clDice': cldice_score}
 
         save_eval_history(df, new_row, csv_file)
         print(f'Evaluation for {os.path.basename(paths[1])} is done.')
 
 
-if __name__=="__main__":
-    args_eval = parse_args_eval()
-
-    csv_file_test = 'testing_file.csv'
-    #paths for testing
-    path_examples =['','']
-
-    compute_scores(paths=path_examples,csv_file=csv_file_test,args=args_eval)
 

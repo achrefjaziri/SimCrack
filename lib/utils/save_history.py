@@ -25,7 +25,6 @@ def save_eval_history(header, new_row, file_name):
     df = pd.DataFrame(data=header)
     df = pd.concat([df, pd.DataFrame.from_records([new_row])])
 
-
     with open(file_name, 'a') as f:
         df.to_csv(f, mode='a', header=f.tell() == 0)
 

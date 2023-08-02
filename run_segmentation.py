@@ -1,6 +1,25 @@
 '''
 Evaluate different models on crack datasets. The segmentation results will be then saved in
 '''
+
+import os
+import random
+import logging
+import argparse
+import torch
+import torch.nn as nn
+import torch.utils.data as data
+import torch.nn.functional as F
+from tqdm import tqdm
+from math import ceil
+import numpy as np
+from distutils.version import LooseVersion
+from tensorboardX import SummaryWriter
+from torchvision.utils import make_grid
+import warnings
+import sys
+
+from utils.train_helper import get_model
 import logging
 import os
 import torch
@@ -9,6 +28,7 @@ from lib.arg_parser.general_args import parse_args
 from lib.models.unet import UNet
 from lib.models.munet import SegPMIUNet, MultiUNet
 from lib.models.consnet import AttU_Net, ConsNet
+from lib.models.transunet import TransUNet
 from lib.dataloaders.sim_dataloader import SimDataloader
 from lib.dataloaders.real_dataloader import RealDataloader
 from lib.dataloaders.multi_crack_set_dataloader import MultiSetDataloader
@@ -38,13 +58,29 @@ def predict_cracks(args):
     if args.arch_name == 'unet' or args.arch_name == 'pmiunet':
         print('loading unet')
         model = UNet(args.input_ch, args.num_classes)
+    elif args.arch_name =='san_saw':
+
+        model, params = get_model(args)
+        model.load_state_dict(torch.load(os.path.join('/home/ajaziri/san_saw/log/gta5_pretrain_2/50.pt')))
+        print(model)
+        model.to('cuda')
+
+    elif args.arch_name == 'transunet':
+        model = TransUNet(img_dim=256,
+                          in_channels=1,
+                          out_channels=128,
+                          head_num=4,
+                          mlp_dim=512,
+                          block_num=8,
+                          patch_dim=16,
+                          class_num=2)
     elif args.arch_name == 'munet':
         model = MultiUNet(args.input_ch, args.num_classes)
     elif args.arch_name == 'munet_pmi':
         model = SegPMIUNet(args.input_ch, args.num_classes)
     elif args.arch_name=='att_unet':
         model = AttU_Net(args.input_ch,args.num_classes)
-    elif args.arch_name == 'cons_unet':
+    elif args.arch_name == 'cons_unet' or args.arch_name == '2unet':
         print('args',args.cons_loss)
         model = ConsNet(args.input_ch, args.num_classes, att=args.att_connection, consistent_features=args.cons_loss,
                         img_size=args.input_size)
@@ -52,15 +88,17 @@ def predict_cracks(args):
 
     model = torch.nn.DataParallel(model, device_ids=list(
         range(torch.cuda.device_count()))).cuda()
-    logging.info('LOADING: ' + args.model_path + 'best_model.pth.tar')
-    full_path = os.path.join(args.model_path, 'best_model.pth.tar')
-    if os.path.isfile(full_path):
-        print("=> loading checkpoint '{}'".format(full_path))
-        checkpoint = torch.load(full_path, map_location=device)
-        training_epochs = checkpoint['epoch'] - 1
-        model.load_state_dict(checkpoint['state_dict'])
-        print("=> loaded checkpoint '{}' (epoch {})"
-              .format(full_path, checkpoint['epoch']))
+    training_epochs =50
+    if not args.arch_name=='san_saw':
+        logging.info('LOADING: ' + args.model_path + 'best_model.pth.tar')
+        full_path = os.path.join(args.model_path, 'best_model.pth.tar')
+        if os.path.isfile(full_path):
+            print("=> loading checkpoint '{}'".format(full_path))
+            checkpoint = torch.load(full_path, map_location=device)
+            training_epochs = checkpoint['epoch'] - 1
+            model.load_state_dict(checkpoint['state_dict'])
+            print("=> loaded checkpoint '{}' (epoch {})"
+                  .format(full_path, checkpoint['epoch']))
 
     print('Loading data..')
     # Data Loader

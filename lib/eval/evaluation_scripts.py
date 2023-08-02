@@ -64,21 +64,26 @@ def eval_model_patchwise(model, data_test, storage_directory='prediction',args= 
                 current_img = F.interpolate(current_img, size=(input_size, input_size), mode='bicubic', align_corners=False)
                 if args.arch_name =='munet':
                     _, seg_output, _ = model(current_img)
+                elif args.arch_name =='san_saw':
+                    pred = model(current_img)
+                    seg_output = pred[2]
                 elif args.arch_name =='munet_pmi':
                     seg_output, _ = model(current_img)
-                elif args.arch_name == 'cons_unet':
-                    current_img_pmi = torch.unsqueeze(patches_pmi[i], dim=0)
-                    # Downsize image if needd
-                    current_img_pmi = F.interpolate(current_img_pmi, size=(input_size, input_size), mode='bicubic',
+                elif args.arch_name == 'cons_unet' or args.arch_name == '2unet':
+                    if args.arch_name == 'const_unet':
+                        current_img_pmi = torch.unsqueeze(patches_pmi[i], dim=0)
+                        # Downsize image if needd
+                        current_img_pmi = F.interpolate(current_img_pmi, size=(input_size, input_size), mode='bicubic',
                                                 align_corners=False)
-                    seg_output,seg_output_pmi, _ = model(current_img,current_img_pmi)
+                        seg_output,seg_output_pmi, _ = model(current_img,current_img_pmi)
+                    else:
+                        seg_output,seg_output_pmi, _ = model(current_img,current_img)
 
                     out_pmi_np = torch.squeeze(seg_output_pmi).detach().cpu().numpy()
                     out_pmi_np_channel_1 = cv2.resize(out_pmi_np[0], (patch_size, patch_size))
                     out_pmi_np_channel_2 = cv2.resize(out_pmi_np[1], (patch_size, patch_size))
                     out_pmi_np = np.array([out_pmi_np_channel_1, out_pmi_np_channel_2])
                     results_pmi.append(out_pmi_np)
-
                 else:
                     seg_output = model(current_img)
                 #append output of a current patch
@@ -102,7 +107,7 @@ def eval_model_patchwise(model, data_test, storage_directory='prediction',args= 
             #Arg max to get the class in the segmentation map from softmax outputs
             stitched_out = np.argmax(stitched_out, axis=0)
 
-            if args.arch_name == 'cons_unet' and args.fuse_predictions: #we need to restitch the outputs for the case of the second output map
+            if (args.arch_name == 'cons_unet' or args.arch_name == '2unet') and args.fuse_predictions: #we need to restitch the outputs for the case of the second output map
                 out_image = np.asarray(results_pmi)
                 # Reshape patches before stiching them up
                 out_image = np.reshape(out_image, (
@@ -149,13 +154,14 @@ def eval_model(model, data_test, storage_directory='prediction', args = None,dev
             elif args.arch_name == 'cons_unet':
                 pmi_maps = data['pmi_map'].to(device)
                 output,output_pmi, _ = model(image,pmi_maps)
-
+            elif args.arch_name == '2unet':
+                output,output_pmi, _ = model(image,image)
             else:
                 output = model(image)
 
 
             prediction = torch.argmax(output, dim=1).float().float().detach().cpu().numpy()
-            if args.arch_name=='cons_unet' and args.fuse_predictions:
+            if (args.arch_name=='cons_unet' or args.arch_name == '2unet') and args.fuse_predictions:
                 prediction_pmi = torch.argmax(output_pmi, dim=1).float().detach().cpu().numpy()
                 prediction = np.add(prediction, prediction_pmi)
                 prediction = prediction > 0.5

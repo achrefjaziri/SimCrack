@@ -34,12 +34,14 @@ def validate_model(model, data_test, loss_funcs, epoch, writer, storage_director
             elif config.arch_name=='cons_unet':
                 pmi_maps = data['pmi_map'].to(gpu)
                 output, output_pmi,_ = model(image,pmi_maps)
+            elif config.arch_name=='2unet':
+                output, output_pmi,_ = model(image,image)
             else:
                 output = model(image)
             loss = loss_funcs['SEG'](output, mask)
             prediction = torch.argmax(output, dim=1).float().detach().cpu().numpy()
 
-            if config.arch_name=='cons_unet' and config.fuse_predictions:
+            if (config.arch_name=='cons_unet' or config.arch_name=='2unet') and config.fuse_predictions:
                 loss_pmi = loss_funcs['SEG'](output_pmi, mask)
                 prediction_pmi = torch.argmax(output_pmi, dim=1).float().detach().cpu().numpy()
                 loss += loss_pmi

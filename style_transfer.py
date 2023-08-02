@@ -223,10 +223,6 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
 
 
         optimizer.step(closure)
-
-
-
-
     # a last correction...
     with torch.no_grad():
         input_img.clamp_(0, 1)
@@ -299,13 +295,7 @@ if __name__=="__main__":
 
             assert style_img.size() == content_img.size(), \
                 "we need to import style and content images of the same size"
-            #plt.figure()
-            #plt.imshow(style_img.detach().cpu().numpy()[0].transpose(1,2,0))
-            #plt.show()
-            #print('content img',content_img)
-            #plt.figure()
-            #plt.imshow(content_img.detach().cpu().numpy()[0].transpose(1, 2, 0))
-            #plt.show()
+
 
             cnn = models.vgg19(pretrained=True).features.to(device).eval()
 
@@ -326,11 +316,5 @@ if __name__=="__main__":
                 #save the results in correct folder
                 save_adaIN_maps(output_img=output.detach().cpu().numpy(),adaIn_dir=adaIn_dir,curr_img_name=img_name,style_set_name='DTD',idx=i)
 
-            #plt.figure()
-            #imshow(output, title='Output Image')
-
-            #TODO add DTD dataloader
-            #TODO fix the path for saving the data
-            #TODO write dataloader to get stylized images
 
 

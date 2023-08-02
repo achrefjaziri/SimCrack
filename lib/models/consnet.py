@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from torchinfo import summary
 from lib.models.conv_layers import inconv, double_conv, down, up, outconv
 
-
+#lib.models.
 class Attention_block(nn.Module):
     def __init__(self, F_g, F_l, F_int):
         super(Attention_block, self).__init__()
@@ -44,8 +44,6 @@ def _regression_loss(x, y):
     x = F.normalize(x, p=2, dim=1)  # , eps=eps)
     y = F.normalize(y, p=2, dim=1)  # , eps=eps)
     return (2 - 2 * (x * y).sum(dim=1)).view(-1)
-
-
 
 class ConsNet(nn.Module):
     """Initalizes the UNet architecture and the according forward pass"""
@@ -221,9 +219,11 @@ if __name__ == "__main__":
     # A full forward pass
     im = torch.randn(2, 1, 256, 256)
     model = ConsNet(1, 2,att=True,consistent_features=True)
-    outs,outs2,loss = model(im,im)
+    #outs,outs2,loss = model(im,im)
     #summary(model, input_size=(2, 1, 256, 256))
-    print(outs.shape,outs2.shape,loss)
+    print(sum(p.numel() for p in model.parameters()))
+
+    #print(outs.shape,outs2.shape,loss)
 
 
     #TODO fix the sum part of x_rgb and x_pmi

@@ -17,6 +17,7 @@ from torch.utils.data.distributed import DistributedSampler
 from lib.models.unet import UNet
 from lib.models.munet import SegPMIUNet,MultiUNet
 from lib.models.consnet import AttU_Net, ConsNet
+from lib.models.transunet import TransUNet
 from lib.dataloaders.sim_dataloader import SimDataloader
 from lib.dataloaders.multi_crack_set_dataloader import MultiSetDataloader
 from lib.training.train import train_model
@@ -114,13 +115,22 @@ def main(gpu, args, current_dir):
     # TODO add the other models
     if args.arch_name == 'unet' or args.arch_name == 'pmiunet':
         model = UNet(args.input_ch, args.num_classes)
+    elif args.arch_name == 'transunet':
+        model = TransUNet(img_dim=256,
+                          in_channels=1,
+                          out_channels=128,
+                          head_num=4,
+                          mlp_dim=512,
+                          block_num=8,
+                          patch_dim=16,
+                          class_num=2)
     elif args.arch_name == 'munet':
         model = MultiUNet(args.input_ch, args.num_classes)
     elif args.arch_name == 'munet_pmi':
         model = SegPMIUNet(args.input_ch,args.num_classes)
     elif args.arch_name == 'att_unet':
         model = AttU_Net(args.input_ch,args.num_classes)
-    elif args.arch_name == 'cons_unet':
+    elif args.arch_name == 'cons_unet' or args.arch_name == '2unet':
         model = ConsNet(args.input_ch,args.num_classes,att=args.att_connection,consistent_features=args.cons_loss,img_size=args.input_size)
 
     if args.resume:

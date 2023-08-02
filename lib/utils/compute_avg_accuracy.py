@@ -14,7 +14,7 @@ if __name__=="__main__":
 
     for file_path in all_csv_files:
         print(file_path)
-        df = pd.read_csv(file_path)
+        df = pd.read_csv(file_path, delimiter=',' , index_col=False)
         df.drop(df.loc[df['Img Name'] == 'Img Name'].index, inplace=True)
 
         print(df)

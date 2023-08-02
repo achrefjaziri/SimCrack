@@ -62,9 +62,13 @@ def train_model(model, data_train, loss_funcs,
                 total_loss = total_loss + loss.item()
                 total_loss_seg = total_loss_seg + loss_seg.item()
                 total_loss_pmi = total_loss_pmi + loss_pmi.item()
-            elif configs.arch_name=='cons_unet':
-                pmi_maps = data['pmi_map'].to(gpu)
-                output_seg,output_seg_pmi,cons_loss = model(images,pmi_maps)
+            elif configs.arch_name=='cons_unet' or configs.arch_name == '2unet':
+                if configs.arch_name == 'const_unet':
+                    pmi_maps = data['pmi_map'].to(gpu)
+                    output_seg,output_seg_pmi,cons_loss = model(images,pmi_maps)
+                else:
+                    output_seg,output_seg_pmi,cons_loss = model(images,images)
+
                 loss_rgb = loss_funcs['SEG'](output_seg, masks)
                 loss_pmi = loss_funcs['SEG'](output_seg_pmi, masks)
                 if configs.cons_loss:
@@ -83,7 +87,7 @@ def train_model(model, data_train, loss_funcs,
             optimizer.zero_grad()
             pbar.update(1)
             prediction_map = torch.argmax(output_seg, dim=1).float().detach().cpu().numpy()
-            if configs.arch_name=='cons_unet' and configs.fuse_predictions:
+            if (configs.arch_name=='cons_unet' or configs.arch_name == '2unet') and configs.fuse_predictions:
                 prediction_map_pmi = torch.argmax(output_seg_pmi, dim=1).float().detach().cpu().numpy()
                 prediction_map = np.add(prediction_map, prediction_map_pmi)
                 prediction_map = prediction_map > 0.5
