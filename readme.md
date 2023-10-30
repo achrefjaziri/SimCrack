@@ -2,9 +2,9 @@
 # CAP-Net #
 
 
-Open-source code for the semantic segmentation model presented in our paper "Designing a Hybrid Neural System to Learn Real-world Crack Segmentation from Fractal-based Simulation": preprint version
+Open-source code for CAP-Net, the semantic segmentation model presented in our paper "Designing a Hybrid Neural System to Learn Real-world Crack Segmentation from Fractal-based Simulation" (https://arxiv.org/abs/2309.09637v1)
 
-The code for the Cracktal Simulator can found in a second repository: 
+The code for the Cracktal Simulator can found in a second repository: https://github.com/achrefjaziri/CracktalConcreteSimulator/tree/master
 ## Dataset ##
 
 The dataset of cracktal synthetic images as well the annotated real images is available at: 
