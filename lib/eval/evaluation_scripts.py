@@ -70,7 +70,7 @@ def eval_model_patchwise(model, data_test, storage_directory='prediction',args= 
                 elif args.arch_name =='munet_pmi':
                     seg_output, _ = model(current_img)
                 elif args.arch_name == 'cons_unet' or args.arch_name == '2unet':
-                    if args.arch_name == 'const_unet':
+                    if args.arch_name == 'cons_unet':
                         current_img_pmi = torch.unsqueeze(patches_pmi[i], dim=0)
                         # Downsize image if needd
                         current_img_pmi = F.interpolate(current_img_pmi, size=(input_size, input_size), mode='bicubic',

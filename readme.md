@@ -4,10 +4,10 @@
 
 Open-source code for the semantic segmentation model presented in our paper "Designing a Hybrid Neural System to Learn Real-world Crack Segmentation from Fractal-based Simulation": preprint version
 
-The code for the Cracktal Simulator can found in a second repository: 
+The code for the Cracktal Simulator can found in a second repository:  https://github.com/achrefjaziri/CracktalConcreteSimulator
 ## Dataset ##
 
-The dataset of cracktal synthetic images as well the annotated real images is available at: 
+The dataset of cracktal synthetic images as well the annotated real images are available at: 
 
 Please note that the dataset is licensed for non-commercial and educational use only as specified by the license file attached with the dataset at above link.
 
@@ -20,7 +20,7 @@ Please note that the dataset is licensed for non-commercial and educational use 
 - When setting up this project, we recommend you follow the following directory schemes to properly load the data for training and evaluation: 
 - additionally to train our CAP-Net, we recommend you donwload the pre-computed PMI and style transfered maps from .. to speed up the training process.
 - Further below, we provide code for generation of the style transfered maps as well as the PMI. 
-
+- You can also use a pretrained model found in this repository. 
 ### Training The Models ###
 
 To replicate the results of our paper, we provide bash scripts to train various baselines mentionned in the paper as well as the CAP-Net model.
@@ -74,7 +74,7 @@ Full Pipeline Evaluation
 ```
 python run_full_evaluation_pipeline.py 
 --dataset RealResist
---gt_path  path/to/ground_truth_masks
+--gt_path  path/to/ground_truth_masksÏus
 --patchwise_eval 
 ```
 

@@ -142,13 +142,8 @@ def evaluate(args):
          'Hausdorff_RBF': [], 'F1_Theta10': [],'clDice': []}
 
     print(dict_res)
-
-
-
     df_all = pd.DataFrame(data=d)
     save_eval_history(df_all, dict_res, avg_acc_csv_path)
-
-
 if __name__ == "__main__":
     print("Evaluation...")
     args = parse_args_eval()

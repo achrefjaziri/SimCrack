@@ -102,7 +102,6 @@ def calc_img_pmi(luminance_img, number_of_pairs=10000, neighbour_size=5, phi=1.7
     kde_B = jscipy.stats.gaussian_kde(np.expand_dims(flattened_img[second_pair], axis=0), bw_method="scott")
 
     input_for_kdeA = np.expand_dims(flattened_img, axis=0)
-
     p_a_values = kde_A.logpdf(input_for_kdeA)
     p_b_values = kde_B.logpdf(input_for_kdeA)
 
@@ -126,7 +125,6 @@ def calc_img_pmi(luminance_img, number_of_pairs=10000, neighbour_size=5, phi=1.7
     p_ab_values = kde.logpdf(input_for_kdeAB)
 
     # Reshape P(A)
-
     list_to_concat_PA = []
     for i in range(neighbour_size ** 2):
         list_to_concat_PA.append(p_a_values)
@@ -147,7 +145,6 @@ def calc_img_pmi(luminance_img, number_of_pairs=10000, neighbour_size=5, phi=1.7
     # In the original paper computed Wij values in the following way e^(PMI).
     # In this implementation the, we calculate the exponential of log likelihood first to avoid NaN values.
 
-    # print(pab.shape,pa.shape,pb.shape)
     w_ij = np.exp(pab) ** (phi) / ((np.exp(pa) * np.exp(pb) + 0.000001))
 
     affinity_matrix = np.sum(w_ij.reshape(luminance_img.shape[0], luminance_img.shape[1], neighbour_size ** 2), axis=2)
@@ -156,14 +153,13 @@ def calc_img_pmi(luminance_img, number_of_pairs=10000, neighbour_size=5, phi=1.7
     return affinity_matrix_normalized
 
 
-def compute_multi_scale_pmi(orig_img,neighbour_size=5,phi_val=2.25):
+def compute_multi_scale_pmi(orig_img,neighbour_size=5,phi_val=2.25,single_scale=True):
     luminance_img = np.apply_along_axis(luminance, 2, orig_img)
 
     luminance_img = NormalizeData(luminance_img)
 
     h = luminance_img.shape[0] // 2
     w = luminance_img.shape[1] // 2
-    #print('h,w vals',h,w, luminance_img.shape,orig_img.shape)
     half_h = (h // 2)
     half_w = (w // 2)
     # Consider the image patchwise when computing PMI scores.
@@ -175,23 +171,27 @@ def compute_multi_scale_pmi(orig_img,neighbour_size=5,phi_val=2.25):
     res_tiles1 = []
     res_tiles2 = []
     # compute weight scores for each image/tile
-    for i in range(len(tiles2)):
-        #print('current img', i)
-        aff_mat_2 = calc_img_pmi(tiles2[i], neighbour_size=neighbour_size,phi=phi_val)
-        aff_mat_1 = calc_img_pmi(tiles1[i], neighbour_size=neighbour_size,phi=phi_val)
+    if single_scale:
+        aff_mat_full = calc_img_pmi(luminance_img, neighbour_size=neighbour_size, phi=phi_val)
+        aff_mat_full =np.expand_dims(aff_mat_full,axis=0)
+        return aff_mat_full
+    else:
+        for i in range(len(tiles2)):
+            aff_mat_2 = calc_img_pmi(tiles2[i], neighbour_size=neighbour_size,phi=phi_val)
+            aff_mat_1 = calc_img_pmi(tiles1[i], neighbour_size=neighbour_size,phi=phi_val)
 
-        res_tiles1.append(aff_mat_1)
-        res_tiles2.append(aff_mat_2)
+            res_tiles1.append(aff_mat_1)
+            res_tiles2.append(aff_mat_2)
 
-    aff_mat_full1 = reconstruct_level1(res_tiles1, luminance_img, h, w)
-    aff_mat_full2 = reconstruct_level2(res_tiles2, luminance_img, h, w)
+        aff_mat_full1 = reconstruct_level1(res_tiles1, luminance_img, h, w)
+        aff_mat_full2 = reconstruct_level2(res_tiles2, luminance_img, h, w)
 
-    # Compute weight scores for the full image
-    aff_mat_full = calc_img_pmi(luminance_img, neighbour_size=neighbour_size,phi=phi_val)
+        # Compute weight scores for the full image
+        aff_mat_full = calc_img_pmi(luminance_img, neighbour_size=neighbour_size,phi=phi_val)
 
-    arr = (aff_mat_full, aff_mat_full2, aff_mat_full1)
+        arr = (aff_mat_full, aff_mat_full2, aff_mat_full1)
 
-    return np.dstack(arr)
+        return np.dstack(arr)
 
 
 def save_pmi_maps(orig_img,args,pmi_dir,curr_img_name):
@@ -203,9 +203,8 @@ def save_pmi_maps(orig_img,args,pmi_dir,curr_img_name):
 
 def save_patch_wise_pmi_maps(orig_img, args, pmi_dir, curr_img_name):
     patch_size, input_size = args.patch_size,args.input_size
-
-    x1, y1 = get_padding_values(orig_img.size(1), patch_size)
-    x2, y2 = get_padding_values(orig_img.size(2), patch_size)
+    x1, y1 = get_padding_values(orig_img.shape[1], patch_size)
+    x2, y2 = get_padding_values(orig_img.shape[2], patch_size)
     # pad images
     img = F.pad(orig_img, (x2, y2, x1, y1))
 
@@ -215,121 +214,87 @@ def save_patch_wise_pmi_maps(orig_img, args, pmi_dir, curr_img_name):
 
     # save shape of images patches
     shape_of_img_patches = patches.data.cpu().numpy().shape
-    # print('shape of image patches', shape_of_img_patches)
 
     # flatten patches
     patches = torch.flatten(patches, start_dim=0, end_dim=2)
-    # print('shape eval patches', patches.shape)
     results = []
     # Start evaluating patches of an images
     for i in range(patches.shape[0]):
-        # print(i)
         current_img = torch.unsqueeze(patches[i], dim=0)
         # Downsize image if needed
         current_img = F.interpolate(current_img, size=(input_size, input_size), mode='bicubic', align_corners=False)
-        # print('input shape 2',current_img.shape) # input should have this shpae  (512, 512, 3)
         current_img = current_img[0].detach().cpu().numpy().copy().transpose(1, 2, 0)
 
-        out_np = compute_multi_scale_pmi(current_img, args.neighbour_size, args.phi_value)
-
+        out_np = compute_multi_scale_pmi(current_img, args.neighbour_size, args.phi_value,single_scale=True)
         # append output of a current patch
-        out_np_channel_1 = cv2.resize(out_np[:,:,0], (patch_size, patch_size))
-        out_np_channel_2 = cv2.resize(out_np[:,:,1], (patch_size, patch_size))
-        out_np_channel_3 = cv2.resize(out_np[:,:,2], (patch_size, patch_size))
+        if out_np.shape[0]==1:
+            nb_channels = 1
+            out_np_channel_1 = cv2.resize(out_np[0, :, :], (patch_size, patch_size))
+            out_np = np.expand_dims(out_np_channel_1, axis=2)
+        else:
+            nb_channels = 3
 
-        out_np = np.array([out_np_channel_1, out_np_channel_2,out_np_channel_3])
+            out_np_channel_1 = cv2.resize(out_np[:,:,0], (patch_size, patch_size))
+            out_np_channel_2 = cv2.resize(out_np[:,:,1], (patch_size, patch_size))
+            out_np_channel_3 = cv2.resize(out_np[:,:,2], (patch_size, patch_size))
+
+            out_np = np.array([out_np_channel_1, out_np_channel_2,out_np_channel_3])
         results.append(out_np)
     out_image = np.asarray(results)
 
     # Reshape patches before stitching them up
     out_image = np.reshape(out_image, (
-        shape_of_img_patches[0], shape_of_img_patches[1], shape_of_img_patches[2], 3, shape_of_img_patches[4],
+        shape_of_img_patches[0], shape_of_img_patches[1], shape_of_img_patches[2], nb_channels, shape_of_img_patches[4],
         shape_of_img_patches[5]))
-
     # Stich image backup again
     stitched_out = torch.from_numpy(out_image).permute(0, 3, 1, 4, 2, 5).contiguous().view(
-        [3, img.shape[1], img.shape[2]]) #Transfer to pytorch again to not mess up the stitching.
+        [nb_channels, img.shape[1], img.shape[2]]) #Transfer to pytorch again to not mess up the stitching.
     stitched_out = remove_padding(stitched_out.detach().cpu().numpy(), x1, y1, x2, y2)
 
     print('Stiched output saved!',stitched_out.shape)
-
     np.save(os.path.join(pmi_dir, curr_img_name), stitched_out.transpose(1,2,0))
-
-
-
 if __name__ == "__main__":
-    os.environ["CUDA_VISIBLE_DEVICES"] = '3'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '0'
+    os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = 'False'
+
     args = parse_args()
+    mode = 'val' #TODO This one is  hardcoded variable. Update.
 
-    mode = 'val'
+    if args.dataset !='RealResist':
+        pmi_dir = os.path.join(args.pmi_dir, f'{args.neighbour_size}_{args.phi_value}', mode)
+        if args.dataset == 'MultiSet':
+            Dataset_test = MultiSetDataloader(args, mode=mode)
+        else:
+            Dataset_test = SimDataloader(args, mode=mode, remove_duplicated=pmi_dir + '/*')
 
-    pmi_dir = os.path.join(args.pmi_dir, f'{args.neighbour_size}_{args.phi_value}', mode)
-    if args.dataset == 'MultiSet':
-        Dataset_test = MultiSetDataloader(args, mode="test")
+        test_load = \
+            torch.utils.data.DataLoader(dataset=Dataset_test,
+                                        num_workers=16, batch_size=1, shuffle=False)
+
+        pmi_dir = os.path.join(args.pmi_dir, f'{args.neighbour_size}_{args.phi_value}', mode)
+
+        for batch, data in enumerate(test_load):
+            input_img = data['input'][0].detach().cpu().numpy().copy().transpose(1, 2, 0)
+            img_name = os.path.basename(data['path'][0])
+
+            save_pmi_maps(input_img, args, pmi_dir, img_name)
     else:
-        Dataset_test = SimDataloader(args, mode=mode, remove_duplicated=pmi_dir + '/*')
+        Dataset_test = RealDataloader(args)
 
-    test_load = \
-        torch.utils.data.DataLoader(dataset=Dataset_test,
-                                    num_workers=16, batch_size=1, shuffle=False)
+        test_load = \
+            torch.utils.data.DataLoader(dataset=Dataset_test,
+                                        num_workers=16, batch_size=1, shuffle=False)
 
-    pmi_dir = os.path.join(args.pmi_dir, f'{args.neighbour_size}_{args.phi_value}', mode)
+        pmi_dir = os.path.join(args.pmi_dir, f'{args.neighbour_size}_{args.phi_value}',args.dataset)
 
-    for batch, data in enumerate(test_load):
-        input_img = data['input'][0].detach().cpu().numpy().copy().transpose(1, 2, 0)
-        img_name = os.path.basename(data['path'][0])
-        print('image batch', batch, input_img.shape, img_name)
+        if not os.path.exists(pmi_dir):
+            os.makedirs(pmi_dir)
 
-        save_pmi_maps(input_img, args, pmi_dir, img_name)
+        for batch, data in enumerate(test_load):
+            input_img = data['input'][0]#.detach().cpu().numpy().copy().transpose(1, 2, 0)
+            img_name = os.path.basename(data['path'][0])
 
-    """
-    mode ='test'
-
-    pmi_dir = os.path.join(args.pmi_dir, f'{args.neighbour_size}_{args.phi_value}', mode)
-    if args.dataset=='MultiSet':
-        Dataset_test = MultiSetDataloader(args, mode="test")
-    else:
-        Dataset_test = SimDataloader(args,mode=mode,remove_duplicated=pmi_dir+'/*')
-
-
-    test_load = \
-        torch.utils.data.DataLoader(dataset=Dataset_test,
-                                    num_workers=16, batch_size=1, shuffle=False)
-
-    pmi_dir = os.path.join(args.pmi_dir,args.dataset,f'{args.neighbour_size}_{args.phi_value}',mode)
-
-    for batch, data in enumerate(test_load):
-
-        input_img = data['input'][0].detach().cpu().numpy().copy().transpose(1,2,0)
-        img_name = os.path.basename(data['path'][0])
-        print('image batch', batch,input_img.shape,img_name)
-
-        save_pmi_maps(input_img, args, pmi_dir, img_name)
-
-    Dataset_test = RealDataloader(args)
-
-    test_load = \
-        torch.utils.data.DataLoader(dataset=Dataset_test,
-                                    num_workers=16, batch_size=1, shuffle=False)
-
-    pmi_dir = os.path.join(args.pmi_dir, f'{args.neighbour_size}_{args.phi_value}',args.dataset)
-    print('pmi_dir',pmi_dir)
-
-    if not os.path.exists(pmi_dir):
-        os.makedirs(pmi_dir)
-
-    for batch, data in enumerate(test_load):
-        input_img = data['input'][0]#.detach().cpu().numpy().copy().transpose(1, 2, 0)
-        img_name = os.path.basename(data['path'][0])
-        print('image batch', batch, input_img.shape, img_name)
-
-        save_patch_wise_pmi_maps(input_img, args, pmi_dir, img_name)
-
-
-    
-    
-    
-    """
+            save_patch_wise_pmi_maps(input_img, args, pmi_dir, img_name)
 
 
 

@@ -41,13 +41,12 @@ class MultiSetDataloader(Dataset):
                                                       ])
             # transformations of the normals tensor
             self.normal_transforms = transforms.Compose([transforms.Resize([self.scale_size, self.scale_size]),
-                                                         # transforms.CenterCrop(self.out_size),transforms.ToTensor()
+                                                         #transforms.CenterCrop(self.out_size),transforms.ToTensor()
                                                          ])
             # transformations of the segmentation tensor
             self.seg_transforms = transforms.Compose([transforms.Resize([self.scale_size, self.scale_size]),
-                                                      # transforms.CenterCrop(self.out_size)
+                                                      #transforms.CenterCrop(self.out_size)
                                                       ])
-
         else:
 
             self.img_transforms = transforms.Compose([transforms.Resize([self.img_size, self.img_size]),

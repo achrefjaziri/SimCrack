@@ -19,6 +19,7 @@ from lib.models.munet import SegPMIUNet,MultiUNet
 from lib.models.consnet import AttU_Net, ConsNet
 from lib.models.transunet import TransUNet
 from lib.dataloaders.sim_dataloader import SimDataloader
+from lib.dataloaders.mixed_dataloader import MixedDataloader
 from lib.dataloaders.multi_crack_set_dataloader import MultiSetDataloader
 from lib.training.train import train_model
 from lib.training.validate import validate_model
@@ -193,6 +194,9 @@ def main(gpu, args, current_dir):
     # Data Loader
     if args.dataset == 'SimResist':
         training_set = SimDataloader(args, mode="train",set_size=args.set_size, filtering=False)
+        validation_set = SimDataloader(args, mode="val",filtering=False)
+    elif args.dataset == 'MixedData':
+        training_set = MixedDataloader(args, mode="train",set_size=args.set_size)
         validation_set = SimDataloader(args, mode="val",filtering=False)
     else:
         training_set = MultiSetDataloader(args, mode="train")

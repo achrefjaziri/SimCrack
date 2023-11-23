@@ -313,7 +313,7 @@ class SimDataloader(Dataset):
                 use_orginal = random.choice([0, 1])
                 # print(use_orginal)
                 if not use_orginal:
-                    adain_path = '/data/resist_data/adaIn_maps/sim_crack/train/mar18_gt0_right.png/DTD'  # os.path.join(self.configs.save_dir,'adaIn_maps',self.configs.dataset, self.mode, os.path.basename(mask_path),'DTD')
+                    adain_path = os.path.join(self.configs.save_dir,'adaIn_maps',self.configs.dataset, self.mode, os.path.basename(mask_path),'DTD')
                     # print(adain_path,os.path.isdir(adain_path))
                     if os.path.isdir(adain_path):
                         # print('exists!!')

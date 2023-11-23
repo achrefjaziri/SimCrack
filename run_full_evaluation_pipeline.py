@@ -93,7 +93,7 @@ if __name__ == "__main__":
     os.environ["CUDA_VISIBLE_DEVICES"] = '2,3'
     os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
     args = parse_args_eval()
-    all_trained_networks = glob.glob(os.path.join(args.save_dir, 'trained_nets', '*', '*', '*')) #2023-02-01_07-58-26
+    all_trained_networks = glob.glob(os.path.join(args.save_dir, 'trained_nets', 'unet', '*', '2022-12-22_12-57-27')) #2023-02-01_07-58-26
 
     # sanity check to remove all empty directories
     non_empty_dir = []
@@ -106,7 +106,6 @@ if __name__ == "__main__":
     for model_path in all_trained_networks:
         print('current Model....', model_path)
         arch_name, train_dataset, set_size, phi_value, hist_eq, input_ch, fuse_pred, att_connections,cons_loss = get_info(model_path)
-
         args_inference = parse_args()
         args_inference.test_mode = True
         args_inference.save_dir = args.save_dir
