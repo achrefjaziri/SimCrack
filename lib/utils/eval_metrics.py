@@ -55,17 +55,13 @@ def iou_numpy(outputs: np.array, labels: np.array):
 
     intersection = (o & lab).sum((1, 2))
     union = (o | lab).sum((1, 2))
-    # print(intersection,union)
     iou = (intersection + SMOOTH) / (union + SMOOTH)
-    # print("eeee",iou_crack)
     lab = np.invert(lab)
     o = np.invert(o)
 
     intersection = (o & lab).sum((1, 2))
     union = (o | lab).sum((1, 2))
-    # print(intersection, union)
     iou = np.concatenate([(intersection + SMOOTH) / (union + SMOOTH), iou])
-    # print("eeee22", iou_background)
 
     # thresholded = np.ceil(np.clip(20 * (iou - 0.5), 0, 10)) / 10
 

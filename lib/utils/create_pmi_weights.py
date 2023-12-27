@@ -1,11 +1,3 @@
-#Today
-#wrtie dataloader to read it on time
-#Start training
-
-#Tomorrow
-#test evaluation metrics
-#start unet evaluation
-#prepare Pmi unet evaluation for real images
 
 import jax.numpy as jnp
 import jax.scipy as jscipy

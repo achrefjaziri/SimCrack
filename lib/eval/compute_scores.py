@@ -51,8 +51,6 @@ def compute_scores(input_args):
     # delete separate color channel
     if args.dataset=='RealResist' or args.dataset=='SimResist':
         ground_truth = ground_truth[:, :, 0]
-    #acc_val = iou_numpy(prediction, ground_truth)
-    #print('final shapes,',ground_truth.shape,prediction.shape)
     acc_val = f1_score(ground_truth.ravel(),prediction.ravel(),average='binary')
 
     gtIndices = np.argwhere(ground_truth)  # np array of shape (nb_of_white_pixesl,2)
@@ -93,7 +91,6 @@ def compute_scores(input_args):
             if predIndices.shape[0] == 0:
                 f1_10 = 0.0
             else:
-                # TODO check if this is correct?
                 f1_10 = theta_F1(ground_truth, prediction, args.rbf_l)
         else:
             f1_10 = None
