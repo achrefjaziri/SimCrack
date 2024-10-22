@@ -1,5 +1,5 @@
 
-# CAP-Net #
+# Designing a Hybrid Neural System to Learn Real-world Crack Segmentation from Fractal-based Simulation #
 
 
 - Open-source code for CAP-Net, the semantic segmentation model presented in our paper "Designing a Hybrid Neural System to Learn Real-world Crack Segmentation from Fractal-based Simulation" (https://arxiv.org/abs/2309.09637v1)
